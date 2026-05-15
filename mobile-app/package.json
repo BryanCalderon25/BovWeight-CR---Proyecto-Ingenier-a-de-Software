@@ -1,0 +1,33 @@
+{
+  "name": "bovweight-cr",
+  "version": "1.0.0",
+  "description": "BovWeight CR - Estimación de peso bovino mediante IA",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@ionic/vue": "^8.4.1",
+    "@ionic/vue-router": "^8.4.1",
+    "@ionic/core": "^8.4.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "pinia": "^2.3.0",
+    "axios": "^1.7.9",
+    "ionicons": "^7.4.0",
+    "chart.js": "^4.4.7",
+    "vue-chartjs": "^5.3.2",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.5"
+  }
+}
