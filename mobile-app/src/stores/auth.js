@@ -1,6 +1,7 @@
 /* === Almacén de Autenticación === */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import api from '@/services/api';
 
 export const useAlmacenAuth = defineStore('auth', () => {
   /* Estado */
@@ -11,7 +12,7 @@ export const useAlmacenAuth = defineStore('auth', () => {
 
   /* Getters */
   const estaAutenticado = computed(() => !!token.value && !!usuario.value);
-  const nombreCompleto = computed(() => usuario.value ? `${usuario.value.nombre} ${usuario.value.apellido}` : '');
+  const nombreCompleto = computed(() => usuario.value ? usuario.value.name : '');
   const rolUsuario = computed(() => usuario.value?.rol || 'ganadero');
 
   /* Acciones */
@@ -19,44 +20,54 @@ export const useAlmacenAuth = defineStore('auth', () => {
     cargando.value = true;
     error.value = '';
     try {
-      /* Simulación de login - conectar con API real */
-      await new Promise(r => setTimeout(r, 1200));
+      const respuesta = await api.post('/login', {
+        email: credenciales.correo,
+        password: credenciales.contrasena
+      });
       
-      const usuarioDemo = {
-        id: 1,
-        nombre: credenciales.correo.split('@')[0],
-        apellido: 'García',
-        correo: credenciales.correo,
-        rol: 'administrador',
-        avatar: null,
-        fincas: 3
-      };
-      const tokenDemo = 'bw_token_' + Date.now();
+      const { datos, token_acceso } = respuesta.data;
 
-      usuario.value = usuarioDemo;
-      token.value = tokenDemo;
-      localStorage.setItem('bw_usuario', JSON.stringify(usuarioDemo));
-      localStorage.setItem('bw_token', tokenDemo);
+      usuario.value = datos;
+      token.value = token_acceso;
+      localStorage.setItem('bw_usuario', JSON.stringify(datos));
+      localStorage.setItem('bw_token', token_acceso);
       
       return { exito: true };
     } catch (err) {
-      error.value = 'Credenciales incorrectas. Intente nuevamente.';
+      error.value = err.response?.data?.mensaje || 'Credenciales incorrectas. Intente nuevamente.';
       return { exito: false, error: error.value };
     } finally {
       cargando.value = false;
     }
   }
 
-  function cerrarSesion() {
-    usuario.value = null;
-    token.value = '';
-    localStorage.removeItem('bw_usuario');
-    localStorage.removeItem('bw_token');
+  async function cerrarSesion() {
+    try {
+      await api.post('/logout');
+    } catch (err) {
+      console.error('Error al cerrar sesión en el servidor', err);
+    } finally {
+      usuario.value = null;
+      token.value = '';
+      localStorage.removeItem('bw_usuario');
+      localStorage.removeItem('bw_token');
+    }
+  }
+
+  async function obtenerPerfil() {
+    try {
+      const respuesta = await api.get('/perfil');
+      usuario.value = respuesta.data.datos;
+      localStorage.setItem('bw_usuario', JSON.stringify(respuesta.data.datos));
+    } catch (err) {
+      console.error('Error al obtener perfil', err);
+    }
   }
 
   async function recuperarContrasena(correo) {
     cargando.value = true;
     try {
+      // Nota: Implementar endpoint en Laravel si es necesario
       await new Promise(r => setTimeout(r, 1000));
       return { exito: true, mensaje: 'Se envió un enlace de recuperación a su correo.' };
     } finally {
@@ -67,6 +78,6 @@ export const useAlmacenAuth = defineStore('auth', () => {
   return {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
-    iniciarSesion, cerrarSesion, recuperarContrasena
+    iniciarSesion, cerrarSesion, obtenerPerfil, recuperarContrasena
   };
 });

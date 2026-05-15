@@ -30,14 +30,12 @@
 
         <!-- Filtros -->
         <div class="animales-filtros animar-aparecer animar-delay-2">
+          <select class="filtro-select" v-model="almacen.filtroFinca">
+            <option v-for="f in almacenFincas.lista" :key="f.id" :value="f.id">{{ f.nombre }}</option>
+          </select>
           <select class="filtro-select" v-model="almacen.filtroRaza">
             <option value="">Todas las razas</option>
             <option v-for="raza in almacen.razasDisponibles" :key="raza" :value="raza">{{ raza }}</option>
-          </select>
-          <select class="filtro-select" v-model="almacen.filtroEstado">
-            <option value="">Todos</option>
-            <option value="activo">Activos</option>
-            <option value="inactivo">Inactivos</option>
           </select>
         </div>
 
@@ -52,17 +50,14 @@
             class="animal-tarjeta animar-aparecer" :style="{ animationDelay: (i * 60) + 'ms' }"
             @click="verDetalle(animal.id)">
             <div class="animal-avatar">
-              {{ animal.nombre.charAt(0) }}
+              {{ animal.nombre ? animal.nombre.charAt(0) : 'A' }}
             </div>
             <div class="animal-info">
               <div class="animal-cabecera">
-                <strong>{{ animal.nombre }}</strong>
-                <span class="insignia" :class="animal.estado === 'activo' ? 'insignia--exito' : 'insignia--peligro'">
-                  {{ animal.estado }}
-                </span>
+                <strong>{{ animal.nombre || 'Sin nombre' }}</strong>
               </div>
-              <span class="animal-detalle">{{ animal.arete }} · {{ animal.raza }} · {{ animal.sexo }}</span>
-              <span class="animal-peso">{{ animal.pesoActual }} kg</span>
+              <span class="animal-detalle">{{ animal.arete }} · {{ animal.raza }} · {{ animal.genero }}</span>
+              <span class="animal-peso">{{ animal.peso_actual || 0 }} kg</span>
             </div>
             <ion-icon :icon="chevronForwardOutline" class="animal-flecha" />
           </div>
@@ -83,37 +78,33 @@
           <h3 class="modal-titulo">Nuevo Animal</h3>
           <div class="campo-grupo">
             <label class="campo-etiqueta">Número de Arete</label>
-            <input class="campo-entrada" v-model="nuevoAnimal.arete" placeholder="BOV-009" />
+            <input class="campo-entrada" v-model="nuevoAnimal.arete" placeholder="CR-1001" />
           </div>
           <div class="campo-grupo">
-            <label class="campo-etiqueta">Nombre</label>
+            <label class="campo-etiqueta">Nombre (Opcional)</label>
             <input class="campo-entrada" v-model="nuevoAnimal.nombre" placeholder="Nombre del animal" />
           </div>
           <div class="campo-grupo">
             <label class="campo-etiqueta">Raza</label>
-            <select class="campo-entrada" v-model="nuevoAnimal.raza">
-              <option value="">Seleccione</option>
-              <option>Brahman</option><option>Holstein</option><option>Pardo Suizo</option>
-              <option>Angus</option><option>Jersey</option>
-            </select>
+            <input class="campo-entrada" v-model="nuevoAnimal.raza" placeholder="Brahman" />
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="campo-grupo">
-              <label class="campo-etiqueta">Sexo</label>
-              <select class="campo-entrada" v-model="nuevoAnimal.sexo">
+              <label class="campo-etiqueta">Género</label>
+              <select class="campo-entrada" v-model="nuevoAnimal.genero">
                 <option>Macho</option><option>Hembra</option>
               </select>
             </div>
             <div class="campo-grupo">
-              <label class="campo-etiqueta">Edad</label>
-              <input class="campo-entrada" v-model="nuevoAnimal.edad" placeholder="3 años" />
+              <label class="campo-etiqueta">Finca</label>
+              <select class="campo-entrada" v-model="nuevoAnimal.farm_id">
+                <option v-for="f in almacenFincas.lista" :key="f.id" :value="f.id">{{ f.nombre }}</option>
+              </select>
             </div>
           </div>
           <div class="campo-grupo">
-            <label class="campo-etiqueta">Finca</label>
-            <select class="campo-entrada" v-model="nuevoAnimal.fincaId">
-              <option v-for="f in fincas" :key="f.id" :value="f.id">{{ f.nombre }}</option>
-            </select>
+            <label class="campo-etiqueta">Fecha de Nacimiento</label>
+            <input type="date" class="campo-entrada" v-model="nuevoAnimal.fecha_nacimiento" />
           </div>
           <div style="display:flex;gap:12px;margin-top:8px">
             <button class="boton boton--secundario" style="flex:1" @click="mostrarFormulario = false">Cancelar</button>
@@ -127,7 +118,7 @@
 
 <script setup>
 /* Vista de Animales con búsqueda, filtros y CRUD */
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
 import { addOutline, chevronForwardOutline } from 'ionicons/icons';
@@ -137,26 +128,49 @@ import { useAlmacenFincas } from '@/stores/fincas.js';
 const router = useRouter();
 const almacen = useAlmacenAnimales();
 const almacenFincas = useAlmacenFincas();
-const fincas = almacenFincas.lista;
 
 const mostrarFormulario = ref(false);
 const nuevoAnimal = reactive({
-  arete: '', nombre: '', raza: '', sexo: 'Macho', edad: '',
-  fincaId: 1, estado: 'activo', pesoActual: 0, foto: null
+  arete: '', nombre: '', raza: '', genero: 'Macho', fecha_nacimiento: '',
+  farm_id: null, peso_actual: 0, notas: ''
+});
+
+onMounted(async () => {
+  if (almacenFincas.lista.length === 0) {
+    await almacenFincas.cargarFincas();
+  }
+  
+  if (almacenFincas.lista.length > 0) {
+    if (!almacen.filtroFinca) {
+      almacen.filtroFinca = almacenFincas.lista[0].id;
+    }
+    await almacen.cargarAnimalesPorFinca(almacen.filtroFinca);
+  }
+});
+
+watch(() => almacen.filtroFinca, async (nuevaFincaId) => {
+  if (nuevaFincaId) {
+    await almacen.cargarAnimalesPorFinca(nuevaFincaId);
+  }
 });
 
 function verDetalle(id) { router.push(`/app/animales/${id}`); }
+
 function limpiarFiltros() {
   almacen.busqueda = '';
   almacen.filtroRaza = '';
-  almacen.filtroEstado = '';
 }
-function guardarAnimal() {
-  if (!nuevoAnimal.arete || !nuevoAnimal.nombre || !nuevoAnimal.raza) return;
-  const finca = fincas.find(f => f.id === nuevoAnimal.fincaId);
-  almacen.agregarAnimal({ ...nuevoAnimal, fincaNombre: finca?.nombre || '' });
-  mostrarFormulario.value = false;
-  Object.assign(nuevoAnimal, { arete: '', nombre: '', raza: '', sexo: 'Macho', edad: '', fincaId: 1 });
+
+async function guardarAnimal() {
+  if (!nuevoAnimal.arete || !nuevoAnimal.farm_id) return;
+  
+  const resultado = await almacen.agregarAnimal({ ...nuevoAnimal });
+  if (resultado.exito) {
+    mostrarFormulario.value = false;
+    Object.assign(nuevoAnimal, { arete: '', nombre: '', raza: '', genero: 'Macho', fecha_nacimiento: '', farm_id: almacen.filtroFinca });
+  } else {
+    alert(resultado.error);
+  }
 }
 </script>
 

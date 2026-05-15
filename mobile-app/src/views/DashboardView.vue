@@ -129,7 +129,7 @@
 
 <script setup>
 /* Dashboard principal — diseño basado en Stitch */
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
@@ -144,6 +144,11 @@ const router = useRouter();
 const almacenAnimales = useAlmacenAnimales();
 const almacenFincas = useAlmacenFincas();
 const almacenPesajes = useAlmacenPesajes();
+
+onMounted(async () => {
+  await almacenFincas.cargarFincas();
+  // Nota: Podríamos cargar animales de la primera finca por defecto o un resumen global si existiera
+});
 
 const ultimoPesaje = computed(() => almacenPesajes.ultimosPesajes[0]);
 

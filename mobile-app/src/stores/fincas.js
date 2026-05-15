@@ -1,15 +1,10 @@
 /* === Almacén de Fincas === */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-
-const fincasDemo = [
-  { id: 1, nombre: 'La Esperanza', ubicacion: 'San Carlos', provincia: 'Alajuela', canton: 'San Carlos', tamano: 250, descripcion: 'Finca ganadera principal con pastos mejorados.', estado: 'activa', animales: 4, ultimaActividad: '2023-10-24' },
-  { id: 2, nombre: 'El Porvenir', ubicacion: 'Liberia', provincia: 'Guanacaste', canton: 'Liberia', tamano: 180, descripcion: 'Finca especializada en ganado Brahman.', estado: 'activa', animales: 2, ultimaActividad: '2023-10-23' },
-  { id: 3, nombre: 'San Rafael', ubicacion: 'Turrialba', provincia: 'Cartago', canton: 'Turrialba', tamano: 120, descripcion: 'Finca lechera con producción artesanal.', estado: 'activa', animales: 2, ultimaActividad: '2023-10-19' }
-];
+import api from '@/services/api';
 
 export const useAlmacenFincas = defineStore('fincas', () => {
-  const lista = ref([...fincasDemo]);
+  const lista = ref([]);
   const cargando = ref(false);
   const busqueda = ref('');
 
@@ -18,30 +13,72 @@ export const useAlmacenFincas = defineStore('fincas', () => {
     const termino = busqueda.value.toLowerCase();
     return lista.value.filter(f =>
       f.nombre.toLowerCase().includes(termino) ||
-      f.ubicacion.toLowerCase().includes(termino) ||
-      f.provincia.toLowerCase().includes(termino)
+      (f.ubicacion && f.ubicacion.toLowerCase().includes(termino))
     );
   });
 
   const totalFincas = computed(() => lista.value.length);
 
+  async function cargarFincas() {
+    cargando.value = true;
+    try {
+      const respuesta = await api.get('/fincas');
+      lista.value = respuesta.data.datos;
+    } catch (err) {
+      console.error('Error al cargar fincas', err);
+    } finally {
+      cargando.value = false;
+    }
+  }
+
   function obtenerPorId(id) {
     return lista.value.find(f => f.id === Number(id));
   }
 
-  function agregarFinca(nueva) {
-    const id = Math.max(...lista.value.map(f => f.id)) + 1;
-    lista.value.push({ ...nueva, id, animales: 0, estado: 'activa', ultimaActividad: new Date().toISOString().split('T')[0] });
+  async function agregarFinca(nueva) {
+    cargando.value = true;
+    try {
+      const respuesta = await api.post('/fincas', nueva);
+      lista.value.push(respuesta.data.datos);
+      return { exito: true };
+    } catch (err) {
+      console.error('Error detallado al agregar finca:', err.response?.data);
+      const mensajeError = err.response?.data?.mensaje || err.response?.data?.message || 'Error desconocido';
+      return { exito: false, error: mensajeError };
+    } finally {
+      cargando.value = false;
+    }
   }
 
-  function actualizarFinca(id, datos) {
-    const indice = lista.value.findIndex(f => f.id === Number(id));
-    if (indice !== -1) lista.value[indice] = { ...lista.value[indice], ...datos };
+  async function actualizarFinca(id, datos) {
+    cargando.value = true;
+    try {
+      const respuesta = await api.put(`/fincas/${id}`, datos);
+      const indice = lista.value.findIndex(f => f.id === Number(id));
+      if (indice !== -1) lista.value[indice] = respuesta.data.datos;
+      return { exito: true };
+    } catch (err) {
+      return { exito: false, error: err.response?.data?.mensaje || 'Error al actualizar finca' };
+    } finally {
+      cargando.value = false;
+    }
   }
 
-  function eliminarFinca(id) {
-    lista.value = lista.value.filter(f => f.id !== Number(id));
+  async function eliminarFinca(id) {
+    cargando.value = true;
+    try {
+      await api.delete(`/fincas/${id}`);
+      lista.value = lista.value.filter(f => f.id !== Number(id));
+      return { exito: true };
+    } catch (err) {
+      return { exito: false, error: err.response?.data?.mensaje || 'Error al eliminar finca' };
+    } finally {
+      cargando.value = false;
+    }
   }
 
-  return { lista, cargando, busqueda, fincasFiltradas, totalFincas, obtenerPorId, agregarFinca, actualizarFinca, eliminarFinca };
+  return { 
+    lista, cargando, busqueda, fincasFiltradas, totalFincas, 
+    cargarFincas, obtenerPorId, agregarFinca, actualizarFinca, eliminarFinca 
+  };
 });

@@ -1,6 +1,33 @@
 version: '3.8'
 
 services:
+  # Laravel App
+  laravel:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bovweight_laravel
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - db
+      - redis
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: bovweight_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - laravel
+
   # MySQL Database
   db:
     image: mysql:8.0
@@ -12,9 +39,19 @@ services:
       MYSQL_USER: bovweight_user
       MYSQL_PASSWORD: secretpassword
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:alpine
+    container_name: bovweight_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   # ML Microservice (Flask + YOLOv8)
   ml-service:
@@ -33,3 +70,4 @@ services:
 
 volumes:
   db_data:
+  redis_data:

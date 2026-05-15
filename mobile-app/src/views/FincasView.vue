@@ -31,22 +31,17 @@
             <div class="finca-cabecera">
               <div>
                 <h3 class="finca-nombre">{{ finca.nombre }}</h3>
-                <p class="finca-ubicacion">📍 {{ finca.ubicacion }}, {{ finca.provincia }}</p>
+                <p class="finca-ubicacion">📍 {{ finca.ubicacion || 'Sin ubicación' }}</p>
               </div>
-              <span class="insignia insignia--exito">{{ finca.estado }}</span>
             </div>
             <div class="finca-stats">
               <div class="finca-stat">
-                <span class="finca-stat-valor">{{ finca.animales }}</span>
+                <span class="finca-stat-valor">{{ finca.animals?.length || 0 }}</span>
                 <span class="finca-stat-label">Animales</span>
               </div>
               <div class="finca-stat">
-                <span class="finca-stat-valor">{{ finca.tamano }}</span>
+                <span class="finca-stat-valor">{{ finca.area_hectareas || 0 }}</span>
                 <span class="finca-stat-label">Hectáreas</span>
-              </div>
-              <div class="finca-stat">
-                <span class="finca-stat-valor">{{ finca.canton }}</span>
-                <span class="finca-stat-label">Cantón</span>
               </div>
             </div>
             <p class="finca-desc">{{ finca.descripcion }}</p>
@@ -71,16 +66,7 @@
           <h3 class="modal-titulo">{{ fincaEditando ? 'Editar Finca' : 'Nueva Finca' }}</h3>
           <div class="campo-grupo"><label class="campo-etiqueta">Nombre</label><input class="campo-entrada" v-model="formulario.nombre" placeholder="Nombre de la finca" /></div>
           <div class="campo-grupo"><label class="campo-etiqueta">Ubicación</label><input class="campo-entrada" v-model="formulario.ubicacion" placeholder="Dirección o zona" /></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="campo-grupo"><label class="campo-etiqueta">Provincia</label>
-              <select class="campo-entrada" v-model="formulario.provincia">
-                <option>San José</option><option>Alajuela</option><option>Cartago</option>
-                <option>Heredia</option><option>Guanacaste</option><option>Puntarenas</option><option>Limón</option>
-              </select>
-            </div>
-            <div class="campo-grupo"><label class="campo-etiqueta">Cantón</label><input class="campo-entrada" v-model="formulario.canton" placeholder="Cantón" /></div>
-          </div>
-          <div class="campo-grupo"><label class="campo-etiqueta">Tamaño (hectáreas)</label><input type="number" class="campo-entrada" v-model.number="formulario.tamano" placeholder="250" /></div>
+          <div class="campo-grupo"><label class="campo-etiqueta">Área (hectáreas)</label><input type="number" class="campo-entrada" v-model.number="formulario.area_hectareas" placeholder="250" /></div>
           <div class="campo-grupo"><label class="campo-etiqueta">Descripción</label><textarea class="campo-entrada" v-model="formulario.descripcion" rows="3" placeholder="Descripción de la finca..."></textarea></div>
           <div style="display:flex;gap:12px;margin-top:8px">
             <button class="boton boton--secundario" style="flex:1" @click="cerrarFormulario">Cancelar</button>
@@ -94,7 +80,7 @@
 
 <script setup>
 /* Vista de Fincas con CRUD completo */
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonBackButton } from '@ionic/vue';
 import { addOutline } from 'ionicons/icons';
 import { useAlmacenFincas } from '@/stores/fincas.js';
@@ -102,32 +88,51 @@ import { useAlmacenFincas } from '@/stores/fincas.js';
 const almacen = useAlmacenFincas();
 const mostrarFormulario = ref(false);
 const fincaEditando = ref(null);
-const formulario = reactive({ nombre: '', ubicacion: '', provincia: 'Alajuela', canton: '', tamano: 0, descripcion: '' });
+const formulario = reactive({ nombre: '', ubicacion: '', area_hectareas: 0, descripcion: '' });
+
+onMounted(() => {
+  almacen.cargarFincas();
+});
 
 function editarFinca(finca) {
   fincaEditando.value = finca.id;
-  Object.assign(formulario, { nombre: finca.nombre, ubicacion: finca.ubicacion, provincia: finca.provincia, canton: finca.canton, tamano: finca.tamano, descripcion: finca.descripcion });
+  Object.assign(formulario, { 
+    nombre: finca.nombre, 
+    ubicacion: finca.ubicacion, 
+    area_hectareas: finca.area_hectareas, 
+    descripcion: finca.descripcion 
+  });
   mostrarFormulario.value = true;
 }
 
-function guardarFinca() {
+async function guardarFinca() {
   if (!formulario.nombre) return;
+  
+  let resultado;
   if (fincaEditando.value) {
-    almacen.actualizarFinca(fincaEditando.value, { ...formulario });
+    resultado = await almacen.actualizarFinca(fincaEditando.value, { ...formulario });
   } else {
-    almacen.agregarFinca({ ...formulario });
+    resultado = await almacen.agregarFinca({ ...formulario });
   }
-  cerrarFormulario();
+
+  if (resultado.exito) {
+    cerrarFormulario();
+  } else {
+    alert(resultado.error);
+  }
 }
 
-function eliminarFinca(id) {
-  if (confirm('¿Eliminar esta finca?')) almacen.eliminarFinca(id);
+async function eliminarFinca(id) {
+  if (confirm('¿Eliminar esta finca?')) {
+    const resultado = await almacen.eliminarFinca(id);
+    if (!resultado.exito) alert(resultado.error);
+  }
 }
 
 function cerrarFormulario() {
   mostrarFormulario.value = false;
   fincaEditando.value = null;
-  Object.assign(formulario, { nombre: '', ubicacion: '', provincia: 'Alajuela', canton: '', tamano: 0, descripcion: '' });
+  Object.assign(formulario, { nombre: '', ubicacion: '', area_hectareas: 0, descripcion: '' });
 }
 </script>
 

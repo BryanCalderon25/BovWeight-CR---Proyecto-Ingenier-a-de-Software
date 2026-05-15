@@ -1,92 +1,111 @@
 /* === Almacén de Pesajes === */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-
-const pesajesDemo = [
-  { id: 1, animalId: 1, arete: 'BOV-001', nombreAnimal: 'Luna', raza: 'Brahman', pesoEstimado: 542, margenError: 15, confianza: 94, foto: null, fecha: '2023-10-24', finca: 'La Esperanza' },
-  { id: 2, animalId: 2, arete: 'BOV-002', nombreAnimal: 'Tormenta', raza: 'Holstein', pesoEstimado: 680, margenError: 18, confianza: 91, foto: null, fecha: '2023-10-22', finca: 'La Esperanza' },
-  { id: 3, animalId: 6, arete: 'BOV-006', nombreAnimal: 'Trueno', raza: 'Brahman', pesoEstimado: 810, margenError: 22, confianza: 88, foto: null, fecha: '2023-10-23', finca: 'El Porvenir' },
-  { id: 4, animalId: 3, arete: 'BOV-003', nombreAnimal: 'Estrella', raza: 'Jersey', pesoEstimado: 410, margenError: 12, confianza: 95, foto: null, fecha: '2023-10-20', finca: 'El Porvenir' },
-  { id: 5, animalId: 4, arete: 'BOV-004', nombreAnimal: 'Centella', raza: 'Angus', pesoEstimado: 720, margenError: 20, confianza: 89, foto: null, fecha: '2023-10-18', finca: 'La Esperanza' },
-  { id: 6, animalId: 7, arete: 'BOV-007', nombreAnimal: 'Paloma', raza: 'Holstein', pesoEstimado: 385, margenError: 10, confianza: 96, foto: null, fecha: '2023-10-21', finca: 'La Esperanza' },
-  { id: 7, animalId: 8, arete: 'BOV-008', nombreAnimal: 'Rayo', raza: 'Angus', pesoEstimado: 695, margenError: 19, confianza: 90, foto: null, fecha: '2023-10-19', finca: 'San Rafael' },
-  { id: 8, animalId: 1, arete: 'BOV-001', nombreAnimal: 'Luna', raza: 'Brahman', pesoEstimado: 530, margenError: 14, confianza: 93, foto: null, fecha: '2023-09-24', finca: 'La Esperanza' },
-  { id: 9, animalId: 1, arete: 'BOV-001', nombreAnimal: 'Luna', raza: 'Brahman', pesoEstimado: 518, margenError: 16, confianza: 91, foto: null, fecha: '2023-08-24', finca: 'La Esperanza' }
-];
+import api from '@/services/api';
 
 export const useAlmacenPesajes = defineStore('pesajes', () => {
-  const lista = ref([...pesajesDemo]);
+  const lista = ref([]);
   const cargando = ref(false);
   const procesando = ref(false);
   const resultadoActual = ref(null);
+  const colaOffline = ref(JSON.parse(localStorage.getItem('bw_cola_offline') || '[]'));
 
   const ultimosPesajes = computed(() => {
-    return [...lista.value].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
+    return [...lista.value].sort((a, b) => new Date(b.fecha_pesaje) - new Date(a.fecha_pesaje)).slice(0, 5);
   });
 
   const pesoTotalHato = computed(() => {
+    if (!lista.value.length) return 0;
     const animalesUnicos = {};
     lista.value.forEach(p => {
-      if (!animalesUnicos[p.animalId] || new Date(p.fecha) > new Date(animalesUnicos[p.animalId].fecha)) {
-        animalesUnicos[p.animalId] = p;
+      if (!animalesUnicos[p.animal_id] || new Date(p.fecha_pesaje) > new Date(animalesUnicos[p.animal_id].fecha_pesaje)) {
+        animalesUnicos[p.animal_id] = p;
       }
     });
-    return Object.values(animalesUnicos).reduce((sum, p) => sum + p.pesoEstimado, 0);
+    return Object.values(animalesUnicos).reduce((sum, p) => sum + Number(p.peso_estimado), 0);
   });
 
-  const datosTendencia = computed(() => {
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-    const datos = [4200, 4350, 4500, 4680, 4820, 4950];
-    return { etiquetas: meses, valores: datos };
-  });
-
-  function obtenerHistorialAnimal(animalId) {
-    return lista.value
-      .filter(p => p.animalId === Number(animalId))
-      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  async function cargarHistorialAnimal(animalId) {
+    cargando.value = true;
+    try {
+      const respuesta = await api.get(`/animales/${animalId}/pesajes`);
+      lista.value = respuesta.data.datos;
+    } catch (err) {
+      console.error('Error al cargar historial', err);
+    } finally {
+      cargando.value = false;
+    }
   }
 
-  async function estimarPeso(imagenBase64, datosAnimal) {
+  async function estimarPeso(imagenBlob, animalId) {
     procesando.value = true;
     try {
-      /* Simulación del procesamiento ML */
-      await new Promise(r => setTimeout(r, 3000));
+      const formData = new FormData();
+      formData.append('animal_id', animalId);
+      formData.append('imagen', imagenBlob);
+
+      const respuesta = await api.post('/ml/estimar-peso', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const { datos, disclaimer } = respuesta.data;
+      resultadoActual.value = {
+        ...datos.registro,
+        detalles_modelo: datos.detalles_modelo,
+        disclaimer
+      };
+
+      // Añadir al inicio de la lista
+      lista.value.unshift(datos.registro);
       
-      const pesoBase = {
-        'Brahman': 520, 'Holstein': 600, 'Jersey': 380,
-        'Angus': 650, 'Pardo Suizo': 550
-      };
-      const base = pesoBase[datosAnimal.raza] || 500;
-      const variacion = (Math.random() - 0.5) * 100;
-      const pesoEstimado = Math.round(base + variacion);
-      const margenError = Math.round(10 + Math.random() * 15);
-      const confianza = Math.round(85 + Math.random() * 12);
-
-      const resultado = {
-        id: Math.max(...lista.value.map(p => p.id)) + 1,
-        animalId: datosAnimal.id,
-        arete: datosAnimal.arete,
-        nombreAnimal: datosAnimal.nombre,
-        raza: datosAnimal.raza,
-        pesoEstimado,
-        margenError,
-        confianza,
-        foto: imagenBase64,
-        fecha: new Date().toISOString().split('T')[0],
-        finca: datosAnimal.fincaNombre || 'Sin finca'
-      };
-
-      lista.value.unshift(resultado);
-      resultadoActual.value = resultado;
-      return resultado;
+      return { exito: true, datos: resultadoActual.value };
+    } catch (err) {
+      // Si falla por conexión, guardar en cola offline
+      if (!navigator.onLine || err.code === 'ERR_NETWORK') {
+        const pesajeOffline = {
+          animal_id: animalId,
+          peso_estimado: 0, // Se estimará al sincronizar o es manual
+          fecha_pesaje: new Date().toISOString().split('T')[0],
+          notas: 'Pendiente de sincronización offline',
+          offline: true
+        };
+        colaOffline.value.push(pesajeOffline);
+        localStorage.setItem('bw_cola_offline', JSON.stringify(colaOffline.value));
+        return { exito: false, offline: true, mensaje: 'Guardado localmente para sincronizar luego.' };
+      }
+      return { exito: false, error: err.response?.data?.mensaje || 'Error al procesar estimación' };
     } finally {
       procesando.value = false;
     }
   }
 
+  async function sincronizarOffline() {
+    if (colaOffline.value.length === 0) return { exito: true, mensaje: 'Nada para sincronizar' };
+    
+    cargando.value = true;
+    try {
+      const respuesta = await api.post('/sincronizacion/pesajes', {
+        registros: colaOffline.value
+      });
+      
+      if (respuesta.data.sincronizados > 0) {
+        colaOffline.value = [];
+        localStorage.removeItem('bw_cola_offline');
+        return { exito: true, mensaje: `Sincronizados ${respuesta.data.sincronizados} registros.` };
+      }
+      return { exito: false, error: 'No se sincronizaron registros.' };
+    } catch (err) {
+      return { exito: false, error: 'Error al sincronizar datos offline.' };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
   return {
-    lista, cargando, procesando, resultadoActual,
-    ultimosPesajes, pesoTotalHato, datosTendencia,
-    obtenerHistorialAnimal, estimarPeso
+    lista, cargando, procesando, resultadoActual, colaOffline,
+    ultimosPesajes, pesoTotalHato,
+    cargarHistorialAnimal, estimarPeso, sincronizarOffline
   };
 });
