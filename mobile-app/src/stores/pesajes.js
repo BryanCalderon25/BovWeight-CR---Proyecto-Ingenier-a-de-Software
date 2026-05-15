@@ -37,31 +37,40 @@ export const useAlmacenPesajes = defineStore('pesajes', () => {
     }
   }
 
-  async function estimarPeso(imagenBlob, animalId) {
+  async function estimarPeso(imagenBase64, animal) {
     procesando.value = true;
     try {
+      // Convertir Base64 a Blob para enviar como archivo real
+      const respuestaImagen = await fetch(imagenBase64);
+      const blob = await respuestaImagen.blob();
+
       const formData = new FormData();
-      formData.append('animal_id', animalId);
-      formData.append('imagen', imagenBlob);
+      formData.append('animal_id', animal.id);
+      formData.append('image', blob, 'pesaje.jpg');
+      formData.append('raza', animal.raza || 'Desconocida');
 
       const respuesta = await api.post('/ml/estimar-peso', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       const { datos, disclaimer } = respuesta.data;
+      const ml = datos.detalles_modelo;
+
+      // Mapear para que la vista lo entienda (camelCase)
       resultadoActual.value = {
-        ...datos.registro,
-        detalles_modelo: datos.detalles_modelo,
+        id: datos.registro.id,
+        pesoEstimado: ml.peso_estimado_kg,
+        margenError: ml.margen_error_kg,
+        confianza: ml.confianza_porcentaje,
+        raza: ml.raza_detectada,
+        fecha: datos.registro.fecha_pesaje,
         disclaimer
       };
 
-      // Añadir al inicio de la lista
       lista.value.unshift(datos.registro);
-      
       return { exito: true, datos: resultadoActual.value };
     } catch (err) {
+      console.error('Error en estimación:', err.response?.data || err);
       // Si falla por conexión, guardar en cola offline
       if (!navigator.onLine || err.code === 'ERR_NETWORK') {
         const pesajeOffline = {

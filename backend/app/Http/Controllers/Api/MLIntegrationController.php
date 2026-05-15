@@ -17,7 +17,8 @@ class MLIntegrationController extends Controller
     {
         $request->validate([
             'animal_id' => 'required|exists:animals,id',
-            'imagen' => 'required|image|mimes:jpeg,png,jpg|max:5120', // Max 5MB
+            'image' => 'required|image|max:10240',
+            'raza' => 'nullable|string'
         ]);
 
         $animal = Animal::findOrFail($request->animal_id);
@@ -27,26 +28,29 @@ class MLIntegrationController extends Controller
         }
 
         // Subir la imagen al servidor (storage)
-        $path = $request->file('imagen')->store('animal_images', 'public');
+        $path = $request->file('image')->store('animal_images', 'public');
 
         // Guardar registro de imagen en la base de datos
         $animalImage = $animal->images()->create([
             'ruta_imagen' => $path,
-            'tipo' => 'lateral', // Asumido por defecto para la predicción
+            'tipo' => 'lateral',
         ]);
 
         try {
-            // Llamar al microservicio Flask de YOLOv8
-            $mlServiceUrl = env('ML_SERVICE_URL', 'http://ml-service:5000');
+            $mlServiceUrl = config('services.ml.url');
             
             $response = Http::attach(
-                'file', file_get_contents($request->file('imagen')->getRealPath()), $request->file('imagen')->getClientOriginalName()
-            )->post("{$mlServiceUrl}/predict");
+                'image', 
+                file_get_contents($request->file('image')->getRealPath()), 
+                $request->file('image')->getClientOriginalName()
+            )->post("{$mlServiceUrl}/api/estimate", [
+                'raza' => $request->raza ?? $animal->raza
+            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
                 
-                $pesoEstimado = $data['peso_estimado'] ?? 0;
+                $pesoEstimado = $data['peso_estimado_kg'] ?? 0;
                 
                 // Guardar el registro de pesaje
                 $weightRecord = WeightRecord::create([
@@ -56,7 +60,7 @@ class MLIntegrationController extends Controller
                     'animal_image_id' => $animalImage->id,
                     'datos_modelo' => $data,
                     'estado_sincronizacion' => 'sincronizado',
-                    'notas' => 'Pesaje estimado por modelo YOLOv8',
+                    'notas' => 'Pesaje estimado por modelo YOLOv8 - Biometría Virtual',
                 ]);
 
                 // Actualizar peso actual del animal
@@ -65,11 +69,10 @@ class MLIntegrationController extends Controller
                 return response()->json([
                     'mensaje' => 'Pesaje estimado exitosamente',
                     'datos' => [
-                        'peso_estimado' => $pesoEstimado,
-                        'detalles_modelo' => $data,
-                        'registro' => $weightRecord
+                        'registro' => $weightRecord,
+                        'detalles_modelo' => $data
                     ],
-                    'disclaimer' => 'Nota: Esta es una estimación basada en visión artificial y puede tener un margen de error.'
+                    'disclaimer' => 'La estimación de peso es aproximada y depende de la calidad de la imagen.'
                 ]);
             }
 

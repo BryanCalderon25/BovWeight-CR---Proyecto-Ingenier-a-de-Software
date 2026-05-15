@@ -186,8 +186,12 @@ function seleccionarAnimal(animal) {
 
 async function ejecutarEstimacion() {
   if (!animalSeleccionado.value || !imagenCapturada.value) return;
-  await almacenPesajes.estimarPeso(imagenCapturada.value, animalSeleccionado.value);
-  resultadoVisible.value = true;
+  const resultado = await almacenPesajes.estimarPeso(imagenCapturada.value, animalSeleccionado.value);
+  if (resultado.exito) {
+    resultadoVisible.value = true;
+  } else {
+    alert(resultado.error || 'No se pudo completar el análisis');
+  }
 }
 
 function nuevoPesaje() {
