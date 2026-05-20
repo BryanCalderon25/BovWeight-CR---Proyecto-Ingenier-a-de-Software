@@ -215,7 +215,7 @@ function nuevoPesaje() {
 .pesaje-procesando p{font-weight:600;color:var(--texto-primario)}
 .pesaje-procesando-detalle{font-size:var(--tamano-xs)!important;color:var(--texto-terciario)!important;font-weight:400!important}
 .pesaje-preview{text-align:center}
-.pesaje-imagen{width:100%;max-height:200px;object-fit:cover;border-radius:var(--borde-radio-md);margin-bottom:8px}
+.pesaje-imagen{width:100%;height:220px;object-fit:contain;background-color:var(--primario-ultra-suave, #f4f6f0);border:1px solid var(--borde-color);border-radius:var(--borde-radio-md);margin-bottom:8px}
 .pesaje-resultado{display:flex;flex-direction:column;gap:16px}
 .pesaje-resultado-peso{display:flex;align-items:baseline;justify-content:center;gap:4px;padding:16px 0}
 .pesaje-resultado-detalles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}

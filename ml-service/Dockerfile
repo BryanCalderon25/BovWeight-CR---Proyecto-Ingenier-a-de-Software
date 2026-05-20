@@ -15,6 +15,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-descargar los pesos YOLOv8 para que estén integrados en la imagen y no dependan de internet al arrancar
+RUN python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.pt', 'yolov8n.pt')"
+
+
 # Copiar el código fuente
 COPY . .
 

@@ -17,7 +17,7 @@ class MLIntegrationController extends Controller
     {
         $request->validate([
             'animal_id' => 'required|exists:animals,id',
-            'image' => 'required|image|max:10240',
+            'image' => 'required|file|max:10240',
             'raza' => 'nullable|string'
         ]);
 
@@ -39,13 +39,22 @@ class MLIntegrationController extends Controller
         try {
             $mlServiceUrl = config('services.ml.url');
             
+            // Calcular edad en meses si tiene fecha de nacimiento
+            $edadMeses = null;
+            if ($animal->fecha_nacimiento) {
+                $edadMeses = \Carbon\Carbon::parse($animal->fecha_nacimiento)->diffInMonths(now());
+            }
+
             $response = Http::attach(
                 'image', 
                 file_get_contents($request->file('image')->getRealPath()), 
                 $request->file('image')->getClientOriginalName()
-            )->post("{$mlServiceUrl}/api/estimate", [
-                'raza' => $request->raza ?? $animal->raza
-            ]);
+            )
+            ->attach('raza', $request->raza ?? $animal->raza ?? 'Desconocida')
+            ->attach('genero', $animal->genero ?? 'Hembra')
+            ->attach('peso_actual', (string)($animal->peso_actual ?? ''))
+            ->attach('edad_meses', (string)($edadMeses ?? ''))
+            ->post("{$mlServiceUrl}/api/estimate");
 
             if ($response->successful()) {
                 $data = $response->json();
