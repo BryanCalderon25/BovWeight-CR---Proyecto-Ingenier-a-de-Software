@@ -34,8 +34,9 @@
               <strong>Subir Imagen</strong>
             </div>
           </div>
-          <!-- Input oculto para archivo -->
+          <!-- Inputs ocultos para captura de archivos y cámara nativa -->
           <input ref="inputArchivo" type="file" accept="image/*" style="display:none" @change="manejarArchivo" />
+          <input ref="inputCamara" type="file" accept="image/*" capture="environment" style="display:none" @change="manejarArchivo" />
         </section>
 
         <!-- Área de análisis -->
@@ -147,6 +148,7 @@ const busquedaAnimal = ref('');
 const animalSeleccionado = ref(null);
 const resultadoVisible = ref(false);
 const inputArchivo = ref(null);
+const inputCamara = ref(null);
 
 const animalesFiltrados = computed(() => {
   if (!busquedaAnimal.value) return [];
@@ -160,14 +162,7 @@ function manejarCaptura(tipo) {
   if (tipo === 'archivo') {
     inputArchivo.value?.click();
   } else {
-    /* Simular captura de cámara con imagen placeholder */
-    imagenCapturada.value = 'data:image/svg+xml;base64,' + btoa(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
-        <rect fill="#E8E9DF" width="400" height="300"/>
-        <text x="200" y="140" text-anchor="middle" fill="#656D4A" font-size="48">🐄</text>
-        <text x="200" y="180" text-anchor="middle" fill="#8B8E83" font-size="14">Foto simulada</text>
-      </svg>
-    `);
+    inputCamara.value?.click();
   }
 }
 
@@ -189,6 +184,10 @@ async function ejecutarEstimacion() {
   const resultado = await almacenPesajes.estimarPeso(imagenCapturada.value, animalSeleccionado.value);
   if (resultado.exito) {
     resultadoVisible.value = true;
+    // Recargar datos en el almacén de animales para actualizar el peso de forma automática en todo el sistema
+    if (animalSeleccionado.value.farm_id) {
+      almacenAnimales.cargarAnimalesPorFinca(animalSeleccionado.value.farm_id);
+    }
   } else {
     alert(resultado.error || 'No se pudo completar el análisis');
   }
@@ -199,6 +198,11 @@ function nuevoPesaje() {
   animalSeleccionado.value = null;
   resultadoVisible.value = false;
   almacenPesajes.resultadoActual = null;
+  
+  // Limpiar el valor del input tipo archivo para permitir seleccionar el mismo archivo consecutivamente
+  if (inputArchivo.value) {
+    inputArchivo.value.value = '';
+  }
 }
 </script>
 

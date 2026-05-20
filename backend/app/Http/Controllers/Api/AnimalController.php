@@ -16,7 +16,7 @@ class AnimalController extends Controller
     {
         $farm = Farm::findOrFail($farmId);
 
-        if ($farm->user_id !== $request->user()->id) {
+        if ($farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($farmId)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -64,7 +64,7 @@ class AnimalController extends Controller
      */
     public function show(Request $request, Animal $animal)
     {
-        if ($animal->farm->user_id !== $request->user()->id) {
+        if ($animal->farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

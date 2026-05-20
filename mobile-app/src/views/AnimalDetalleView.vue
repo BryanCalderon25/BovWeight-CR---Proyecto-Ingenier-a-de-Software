@@ -3,10 +3,10 @@
     <ion-header class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button default-href="/app/animales" text="" />
+          <ion-back-button :default-href="almacenAuth.rolUsuario === 'invitado' ? `/app/fincas/${almacenAuth.usuario?.invited_farm_id}` : '/app/animales'" text="" />
         </ion-buttons>
         <ion-title>Detalle Animal</ion-title>
-        <ion-buttons slot="end">
+        <ion-buttons slot="end" v-if="almacenAuth.rolUsuario !== 'invitado'">
           <ion-button @click="editando = !editando">
             <ion-icon :icon="editando ? closeOutline : createOutline" />
           </ion-button>
@@ -75,7 +75,7 @@
         </section>
 
         <!-- Acciones -->
-        <div class="detalle-acciones animar-aparecer animar-delay-4">
+        <div class="detalle-acciones animar-aparecer animar-delay-4" v-if="almacenAuth.rolUsuario !== 'invitado'">
           <button class="boton boton--primario boton--completo" @click="irAPesar">📷 Nuevo Pesaje</button>
           <button class="boton boton--secundario boton--completo" @click="confirmarEliminar">🗑️ Eliminar Animal</button>
         </div>
@@ -124,18 +124,28 @@ import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBu
 import { createOutline, closeOutline } from 'ionicons/icons';
 import { useAlmacenAnimales } from '@/stores/animales.js';
 import { useAlmacenPesajes } from '@/stores/pesajes.js';
+import { useAlmacenAuth } from '@/stores/auth.js';
 
 const route = useRoute();
 const router = useRouter();
 const almacenAnimales = useAlmacenAnimales();
 const almacenPesajes = useAlmacenPesajes();
+const almacenAuth = useAlmacenAuth();
 
 const animal = computed(() => almacenAnimales.obtenerPorId(route.params.id));
 const historial = computed(() => almacenPesajes.obtenerHistorialAnimal(route.params.id));
 const editando = ref(false);
 const formularioEdicion = reactive({ nombre: '', estado: '', edad: '' });
 
-onMounted(() => {
+onMounted(async () => {
+  // Cargar datos del animal desde el servidor si no están cargados localmente
+  if (!animal.value) {
+    await almacenAnimales.cargarAnimal(route.params.id);
+  }
+
+  // Cargar historial de pesajes real para este animal
+  await almacenPesajes.cargarHistorialAnimal(route.params.id);
+
   if (animal.value) {
     formularioEdicion.nombre = animal.value.nombre;
     formularioEdicion.estado = animal.value.estado;

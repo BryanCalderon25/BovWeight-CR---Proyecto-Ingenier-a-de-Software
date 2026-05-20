@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AnimalController;
 use App\Http\Controllers\Api\WeightRecordController;
 use App\Http\Controllers\Api\MLIntegrationController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\FarmInvitationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\ReportController;
 
 Route::post('/registro', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/invitaciones/resolver/{token}', [FarmInvitationController::class, 'resolveGuestAccess']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Perfil y Sesión
@@ -34,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/animales/{animal}', [AnimalController::class, 'destroy']);
 
     // Registros de Pesaje (Weight Records)
+    Route::get('/pesajes', [WeightRecordController::class, 'listAll']);
     Route::get('/animales/{animalId}/pesajes', [WeightRecordController::class, 'index']);
     Route::post('/pesajes', [WeightRecordController::class, 'store']);
 
@@ -41,7 +44,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ml/estimar-peso', [MLIntegrationController::class, 'predictWeight']);
 
     // Reportes
+    Route::get('/reportes/generar', [ReportController::class, 'generateReport']);
     Route::get('/animales/{animalId}/reporte', [ReportController::class, 'generateAnimalReport']);
+
+    // Invitaciones
+    Route::post('/invitaciones', [FarmInvitationController::class, 'store']);
 
     // Sincronización Offline
     Route::post('/sincronizacion/pesajes', [App\Http\Controllers\Api\OfflineSyncController::class, 'syncWeightRecords']);

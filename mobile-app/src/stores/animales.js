@@ -94,9 +94,27 @@ export const useAlmacenAnimales = defineStore('animales', () => {
     }
   }
 
+  async function cargarAnimal(id) {
+    cargando.value = true;
+    try {
+      const respuesta = await api.get(`/animales/${id}`);
+      const nuevoAnimal = respuesta.data.datos;
+      const indice = lista.value.findIndex(a => a.id === Number(id));
+      if (indice !== -1) {
+        lista.value[indice] = nuevoAnimal;
+      } else {
+        lista.value.push(nuevoAnimal);
+      }
+    } catch (err) {
+      console.error('Error al cargar animal', err);
+    } finally {
+      cargando.value = false;
+    }
+  }
+
   return {
     lista, cargando, busqueda, filtroRaza, filtroEstado, filtroFinca,
     animalesFiltrados, totalAnimales, pesoPromedio, razasDisponibles,
-    cargarAnimalesPorFinca, obtenerPorId, agregarAnimal, actualizarAnimal, eliminarAnimal
+    cargarAnimalesPorFinca, cargarAnimal, obtenerPorId, agregarAnimal, actualizarAnimal, eliminarAnimal
   };
 });

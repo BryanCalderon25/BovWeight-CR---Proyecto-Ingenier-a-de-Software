@@ -9,6 +9,32 @@ use Illuminate\Http\Request;
 
 class WeightRecordController extends Controller
 {
+    public function listAll(Request $request)
+    {
+        $user = $request->user();
+        
+        $query = WeightRecord::query();
+
+        if ($user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at))) {
+            $query->whereHas('animal', function ($q) use ($user) {
+                $q->where('farm_id', $user->invited_farm_id);
+            });
+        } else {
+            $query->whereHas('animal.farm', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+        
+        $records = $query->with(['animal.farm'])
+            ->orderBy('fecha_pesaje', 'desc')
+            ->get();
+
+        return response()->json([
+            'mensaje' => 'Todos los registros de pesaje obtenidos exitosamente',
+            'datos' => $records
+        ]);
+    }
+
     /**
      * Obtener el historial de pesaje de un animal.
      */
@@ -16,7 +42,7 @@ class WeightRecordController extends Controller
     {
         $animal = Animal::findOrFail($animalId);
 
-        if ($animal->farm->user_id !== $request->user()->id) {
+        if ($animal->farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

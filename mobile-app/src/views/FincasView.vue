@@ -45,9 +45,12 @@
               </div>
             </div>
             <p class="finca-desc">{{ finca.descripcion }}</p>
-            <div class="finca-acciones">
-              <button class="boton boton--secundario boton--pequeno" @click="editarFinca(finca)">✏️ Editar</button>
-              <button class="boton boton--secundario boton--pequeno" style="color:var(--peligro)" @click="eliminarFinca(finca.id)">🗑️ Eliminar</button>
+            <div class="finca-acciones" style="display:flex;justify-content:space-between;width:100%;align-items:center">
+              <div style="display:flex;gap:8px">
+                <button class="boton boton--secundario boton--pequeno" @click="editarFinca(finca)">✏️ Editar</button>
+                <button class="boton boton--secundario boton--pequeno" style="color:var(--peligro)" @click="eliminarFinca(finca.id)">🗑️ Eliminar</button>
+              </div>
+              <button class="boton boton--primario boton--pequeno" @click="irADetalle(finca.id)">👁️ Ver Detalle</button>
             </div>
           </div>
         </div>
@@ -81,14 +84,20 @@
 <script setup>
 /* Vista de Fincas con CRUD completo */
 import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonBackButton } from '@ionic/vue';
 import { addOutline } from 'ionicons/icons';
 import { useAlmacenFincas } from '@/stores/fincas.js';
 
+const router = useRouter();
 const almacen = useAlmacenFincas();
 const mostrarFormulario = ref(false);
 const fincaEditando = ref(null);
 const formulario = reactive({ nombre: '', ubicacion: '', area_hectareas: 0, descripcion: '' });
+
+function irADetalle(id) {
+  router.push(`/app/fincas/${id}`);
+}
 
 onMounted(() => {
   almacen.cargarFincas();

@@ -111,14 +111,21 @@ const almacenPesajes = useAlmacenPesajes();
 const canvasGrafico = ref(null);
 
 const topAnimales = computed(() => {
-  const mejores = [...almacenPesajes.lista]
+  return [...almacenPesajes.lista]
+    .map(p => ({
+      id: p.id,
+      nombre: p.animal?.nombre || p.nombreAnimal || 'Bovino',
+      raza: p.animal?.raza || p.raza || 'Desconocida',
+      pesoEstimado: Math.round(Number(p.peso_estimado || p.pesoEstimado || 0))
+    }))
     .sort((a, b) => b.pesoEstimado - a.pesoEstimado)
     .slice(0, 3);
-  return mejores;
 });
 
 /* Dibujar gráfico simple con Canvas */
-onMounted(() => {
+onMounted(async () => {
+  await almacenPesajes.cargarTodosLosPesajes();
+
   if (!canvasGrafico.value) return;
   const ctx = canvasGrafico.value.getContext('2d');
   const ancho = canvasGrafico.value.parentElement.clientWidth;

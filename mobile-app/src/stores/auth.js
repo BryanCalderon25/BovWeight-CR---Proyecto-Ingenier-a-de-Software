@@ -13,7 +13,7 @@ export const useAlmacenAuth = defineStore('auth', () => {
   /* Getters */
   const estaAutenticado = computed(() => !!token.value && !!usuario.value);
   const nombreCompleto = computed(() => usuario.value ? usuario.value.name : '');
-  const rolUsuario = computed(() => usuario.value?.rol || 'ganadero');
+  const rolUsuario = computed(() => usuario.value?.rol || usuario.value?.role || 'ganadero');
 
   /* Acciones */
   async function iniciarSesion(credenciales) {
@@ -39,6 +39,14 @@ export const useAlmacenAuth = defineStore('auth', () => {
     } finally {
       cargando.value = false;
     }
+  }
+
+  function iniciarSesionInvitado(datosInvitacion) {
+    const { token: tokenInvitado, usuario: usuarioInvitado } = datosInvitacion;
+    usuario.value = usuarioInvitado;
+    token.value = tokenInvitado;
+    localStorage.setItem('bw_usuario', JSON.stringify(usuarioInvitado));
+    localStorage.setItem('bw_token', tokenInvitado);
   }
 
   async function cerrarSesion() {
@@ -78,6 +86,6 @@ export const useAlmacenAuth = defineStore('auth', () => {
   return {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
-    iniciarSesion, cerrarSesion, obtenerPerfil, recuperarContrasena
+    iniciarSesion, cerrarSesion, obtenerPerfil, recuperarContrasena, iniciarSesionInvitado
   };
 });

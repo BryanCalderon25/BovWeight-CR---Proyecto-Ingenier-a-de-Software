@@ -2,10 +2,15 @@
   <ion-page>
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
-      <ion-tab-bar slot="bottom">
+      <ion-tab-bar slot="bottom" v-if="almacenAuth.rolUsuario !== 'invitado'">
         <ion-tab-button tab="inicio" href="/app/inicio">
           <ion-icon :icon="homeOutline" />
           <ion-label>Inicio</ion-label>
+        </ion-tab-button>
+
+        <ion-tab-button tab="fincas" href="/app/fincas">
+          <ion-icon :icon="businessOutline" />
+          <ion-label>Fincas</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="animales" href="/app/animales">
@@ -30,7 +35,10 @@
 <script setup>
 /* Layout principal con tabs de navegación inferior */
 import { IonPage, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from '@ionic/vue';
-import { homeOutline, pawOutline, scaleOutline, timeOutline } from 'ionicons/icons';
+import { homeOutline, businessOutline, pawOutline, scaleOutline, timeOutline } from 'ionicons/icons';
+import { useAlmacenAuth } from '@/stores/auth.js';
+
+const almacenAuth = useAlmacenAuth();
 </script>
 
 <style scoped>

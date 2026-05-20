@@ -70,7 +70,7 @@
                 <strong>{{ r.titulo }}</strong>
                 <span style="display:block;font-size:var(--tamano-xs);color:var(--texto-terciario)">{{ r.fecha }}</span>
               </div>
-              <button class="boton boton--secundario boton--pequeno">📥</button>
+              <button class="boton boton--secundario boton--pequeno" @click="descargarReporteAnterior(r)">📥</button>
             </div>
           </div>
         </section>
@@ -85,6 +85,7 @@
 import { ref } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton } from '@ionic/vue';
 import { useAlmacenFincas } from '@/stores/fincas.js';
+import api from '@/services/api';
 
 const almacenFincas = useAlmacenFincas();
 const fincas = almacenFincas.lista;
@@ -93,6 +94,8 @@ const tipoSeleccionado = ref('general');
 const fincaSeleccionada = ref('');
 const generando = ref(false);
 const reporteGenerado = ref(false);
+const blobReporte = ref(null);
+const nombreArchivoReporte = ref('');
 
 const tiposReporte = [
   { id: 'general', icono: '📊', nombre: 'General', descripcion: 'Resumen completo del hato' },
@@ -101,22 +104,128 @@ const tiposReporte = [
 ];
 
 const reportesAnteriores = ref([
-  { id: 1, titulo: 'Reporte General - Oct 2023', fecha: '24/10/2023' },
-  { id: 2, titulo: 'Pesajes La Esperanza', fecha: '20/10/2023' },
-  { id: 3, titulo: 'Reporte Mensual Sep 2023', fecha: '30/09/2023' }
+  { id: 1, titulo: 'Reporte General - Mayo 2026', fecha: '20/05/2026' },
+  { id: 2, titulo: 'Pesajes La Esperanza', fecha: '18/05/2026' },
+  { id: 3, titulo: 'Reporte Hato Completo', fecha: '14/05/2026' }
 ]);
 
 async function generarReporte() {
   generando.value = true;
-  /* Simulación de generación de PDF */
-  await new Promise(r => setTimeout(r, 2000));
-  generando.value = false;
-  reporteGenerado.value = true;
+  reporteGenerado.value = false;
+  blobReporte.value = null;
+  
+  try {
+    const params = {
+      tipo: tipoSeleccionado.value,
+      finca_id: fincaSeleccionada.value || undefined
+    };
+    
+    const respuesta = await api.get('/reportes/generar', {
+      params,
+      responseType: 'blob'
+    });
+    
+    blobReporte.value = respuesta.data;
+    nombreArchivoReporte.value = `reporte_${tipoSeleccionado.value}_${new Date().toISOString().split('T')[0]}.pdf`;
+    reporteGenerado.value = true;
+    
+    // Agregar al historial de la sesión
+    reportesAnteriores.value.unshift({
+      id: Date.now(),
+      titulo: `Reporte ${tipoSeleccionado.value.toUpperCase()} - ${new Date().toLocaleDateString('es-CR')}`,
+      fecha: new Date().toLocaleDateString('es-CR'),
+      blob: respuesta.data,
+      nombreArchivo: nombreArchivoReporte.value
+    });
+  } catch (err) {
+    console.error('Error al generar reporte:', err);
+    alert('No se pudo generar el reporte PDF. Asegúrese de tener animales y pesajes registrados.');
+  } finally {
+    generando.value = false;
+  }
 }
 
-function descargar() { alert('Descargando reporte PDF...'); }
-function compartirWhatsApp() { window.open('https://wa.me/?text=Reporte%20BovWeight%20CR', '_blank'); }
-function compartirCorreo() { window.open('mailto:?subject=Reporte%20BovWeight%20CR&body=Adjunto%20reporte', '_blank'); }
+function descargar() {
+  if (!blobReporte.value) return;
+  const url = window.URL.createObjectURL(new Blob([blobReporte.value], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', nombreArchivoReporte.value);
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+function descargarReporteAnterior(r) {
+  if (r.blob) {
+    const url = window.URL.createObjectURL(new Blob([r.blob], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', r.nombreArchivo || 'reporte.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } else {
+    alert(`Descargando copia de respaldo del reporte: ${r.titulo}`);
+  }
+}
+
+async function compartirWhatsApp() {
+  if (!blobReporte.value) {
+    alert('Genere primero el reporte para poder compartirlo.');
+    return;
+  }
+  
+  const archivo = new File([blobReporte.value], nombreArchivoReporte.value, { type: 'application/pdf' });
+  
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+    try {
+      await navigator.share({
+        files: [archivo],
+        title: 'Reporte BovWeight CR',
+        text: 'Hola, adjunto el reporte de pesajes de BovWeight CR.'
+      });
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.error('Error al compartir nativamente:', e);
+      }
+    }
+  } else {
+    // Fallback tradicional Web
+    const texto = encodeURIComponent(`Hola, acabo de generar el reporte *${nombreArchivoReporte.value}* en la plataforma BovWeight CR. Recuerda descargar el PDF adjunto.`);
+    window.open(`https://wa.me/?text=${texto}`, '_blank');
+  }
+}
+
+async function compartirCorreo() {
+  if (!blobReporte.value) {
+    alert('Genere primero el reporte para poder compartirlo.');
+    return;
+  }
+  
+  const archivo = new File([blobReporte.value], nombreArchivoReporte.value, { type: 'application/pdf' });
+  
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+    try {
+      await navigator.share({
+        files: [archivo],
+        title: 'Reporte BovWeight CR',
+        text: 'Hola, adjunto mi reporte de pesajes e inventario de BovWeight CR.'
+      });
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.error('Error al compartir nativamente:', e);
+      }
+    }
+  } else {
+    // Fallback tradicional Web
+    const subject = encodeURIComponent(`Reporte BovWeight CR - ${tipoSeleccionado.value.toUpperCase()}`);
+    const body = encodeURIComponent(`Hola, adjunto el reporte de mi hato bovino.\n\nNombre del archivo: ${nombreArchivoReporte.value}\n\nGenerado por BovWeight CR.`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+  }
+}
 </script>
 
 <style scoped>

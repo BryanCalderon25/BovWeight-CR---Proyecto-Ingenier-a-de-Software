@@ -78,7 +78,10 @@
           <h3 class="modal-titulo">Nuevo Animal</h3>
           <div class="campo-grupo">
             <label class="campo-etiqueta">Número de Arete</label>
-            <input class="campo-entrada" v-model="nuevoAnimal.arete" placeholder="CR-1001" />
+            <div style="display:flex;align-items:center;background:var(--superficie-tarjeta);border:1px solid var(--borde-color);border-radius:var(--borde-radio-md);padding:0 12px;margin-top:6px">
+              <span style="font-weight:bold;color:var(--primario);margin-right:6px">CR-</span>
+              <input class="campo-entrada" v-model="numeroAreteIngresado" placeholder="1001" style="border:none;padding:10px 0;outline:none;background:transparent;width:100%" />
+            </div>
           </div>
           <div class="campo-grupo">
             <label class="campo-etiqueta">Nombre (Opcional)</label>
@@ -130,6 +133,7 @@ const almacen = useAlmacenAnimales();
 const almacenFincas = useAlmacenFincas();
 
 const mostrarFormulario = ref(false);
+const numeroAreteIngresado = ref('');
 const nuevoAnimal = reactive({
   arete: '', nombre: '', raza: '', genero: 'Macho', fecha_nacimiento: '',
   farm_id: null, peso_actual: 0, notas: ''
@@ -162,11 +166,26 @@ function limpiarFiltros() {
 }
 
 async function guardarAnimal() {
-  if (!nuevoAnimal.arete || !nuevoAnimal.farm_id) return;
+  let refNumero = numeroAreteIngresado.value.trim().toUpperCase();
+  if (!refNumero) {
+    alert('Por favor ingrese el número de arete.');
+    return;
+  }
+  
+  if (refNumero.startsWith('CR-')) {
+    refNumero = refNumero.substring(3);
+  }
+  
+  nuevoAnimal.arete = 'CR-' + refNumero;
+  if (!nuevoAnimal.farm_id) {
+    alert('Por favor seleccione una finca.');
+    return;
+  }
   
   const resultado = await almacen.agregarAnimal({ ...nuevoAnimal });
   if (resultado.exito) {
     mostrarFormulario.value = false;
+    numeroAreteIngresado.value = '';
     Object.assign(nuevoAnimal, { arete: '', nombre: '', raza: '', genero: 'Macho', fecha_nacimiento: '', farm_id: almacen.filtroFinca });
   } else {
     alert(resultado.error);

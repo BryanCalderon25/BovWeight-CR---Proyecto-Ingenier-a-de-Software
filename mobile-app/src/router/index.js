@@ -25,6 +25,11 @@ const rutas = [
     component: () => import('@/views/LoginView.vue')
   },
   {
+    path: '/invitado/acceso/:token',
+    name: 'AccesoInvitado',
+    component: () => import('@/views/AccesoInvitadoView.vue')
+  },
+  {
     /* Rutas principales con tabs */
     path: '/app/',
     component: () => import('@/views/TabsLayout.vue'),
@@ -53,6 +58,11 @@ const rutas = [
         path: 'historial',
         name: 'Historial',
         component: () => import('@/views/HistorialView.vue')
+      },
+      {
+        path: 'fincas',
+        name: 'Fincas',
+        component: () => import('@/views/FincasView.vue')
       }
     ]
   },
@@ -60,12 +70,6 @@ const rutas = [
     path: '/app/animales/:id',
     name: 'DetalleAnimal',
     component: () => import('@/views/AnimalDetalleView.vue'),
-    beforeEnter: protegerRuta
-  },
-  {
-    path: '/app/fincas',
-    name: 'Fincas',
-    component: () => import('@/views/FincasView.vue'),
     beforeEnter: protegerRuta
   },
   {

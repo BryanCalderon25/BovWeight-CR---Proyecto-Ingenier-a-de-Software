@@ -13,7 +13,15 @@ class FarmController extends Controller
      */
     public function index(Request $request)
     {
-        $farms = $request->user()->farms;
+        $user = $request->user();
+
+        $isGuest = $user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at));
+
+        if ($isGuest) {
+            $farms = Farm::where('id', $user->invited_farm_id)->with('animals')->get();
+        } else {
+            $farms = $user->farms()->with('animals')->get();
+        }
 
         return response()->json([
             'mensaje' => 'Fincas obtenidas exitosamente',
@@ -46,7 +54,7 @@ class FarmController extends Controller
      */
     public function show(Request $request, Farm $farm)
     {
-        if ($farm->user_id !== $request->user()->id) {
+        if ($farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($farm->id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
