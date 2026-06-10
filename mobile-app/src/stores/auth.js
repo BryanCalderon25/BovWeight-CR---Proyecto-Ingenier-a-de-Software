@@ -45,7 +45,54 @@ export const useAlmacenAuth = defineStore('auth', () => {
       
       return { exito: true };
     } catch (err) {
-      error.value = err.response?.data?.mensaje || 'Credenciales incorrectas. Intente nuevamente.';
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor';
+      } else if (err.response.status === 401 || err.response.status === 404) {
+        error.value = 'Credenciales incorrectas';
+      } else {
+        error.value = err.response?.data?.mensaje || 'Error al iniciar sesión';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function registrarse(datosRegistro) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.post('/registro', {
+        name: datosRegistro.nombre,
+        email: datosRegistro.correo,
+        password: datosRegistro.contrasena,
+        password_confirmation: datosRegistro.confirmarContrasena
+      });
+
+      const { datos, token_acceso } = respuesta.data;
+
+      if (token_acceso && datos) {
+        usuario.value = datos;
+        token.value = token_acceso;
+        localStorage.setItem('bw_usuario', JSON.stringify(datos));
+        localStorage.setItem('bw_token', token_acceso);
+        return { exito: true, autologin: true };
+      } else {
+        return { exito: true, autologin: false, mensaje: respuesta.data?.mensaje || 'Usuario registrado exitosamente' };
+      }
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor';
+      } else if (err.response.status === 422) {
+        const validationErrors = err.response.data?.errors;
+        if (validationErrors) {
+          error.value = Object.values(validationErrors).flat().join(' ');
+        } else {
+          error.value = err.response.data?.mensaje || 'Datos de registro inválidos';
+        }
+      } else {
+        error.value = err.response?.data?.mensaje || 'Error en el registro';
+      }
       return { exito: false, error: error.value };
     } finally {
       cargando.value = false;
@@ -61,15 +108,25 @@ export const useAlmacenAuth = defineStore('auth', () => {
   }
 
   async function cerrarSesion() {
-    try {
-      await api.post('/logout');
-    } catch (err) {
-      console.error('Error al cerrar sesión en el servidor', err);
-    } finally {
-      usuario.value = null;
-      token.value = '';
-      localStorage.removeItem('bw_usuario');
-      localStorage.removeItem('bw_token');
+    const tokenActual = token.value;
+
+    usuario.value = null;
+    token.value = '';
+    localStorage.removeItem('bw_usuario');
+    localStorage.removeItem('bw_token');
+    sessionStorage.removeItem('bw_usuario');
+    sessionStorage.removeItem('bw_token');
+
+    if (tokenActual) {
+      try {
+        await api.post('/logout', {}, {
+          headers: {
+            Authorization: `Bearer ${tokenActual}`
+          }
+        });
+      } catch (err) {
+        console.error('Error al cerrar sesión en el servidor', err);
+      }
     }
   }
 
@@ -131,7 +188,7 @@ export const useAlmacenAuth = defineStore('auth', () => {
   return {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
-    iniciarSesion, cerrarSesion, obtenerPerfil, iniciarSesionInvitado,
+    iniciarSesion, registrarse, cerrarSesion, obtenerPerfil, iniciarSesionInvitado,
     solicitarRecuperacionPassword, restablecerPassword
   };
 });

@@ -54,7 +54,7 @@ export function protegerRuta(to, from, next) {
 }
 
 /**
- * Evita que usuarios autenticados ingresen a rutas de invitados (login, recuperación)
+ * Evita que usuarios autenticados ingresen a rutas de invitados (login, registro, recuperación)
  */
 export function evitarAutenticados(to, from, next) {
   const almacenAuth = useAlmacenAuth()

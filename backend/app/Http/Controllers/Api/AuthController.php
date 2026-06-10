@@ -27,6 +27,14 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        try {
+            if (method_exists($user, 'assignRole') && \Spatie\Permission\Models\Role::where('name', 'ganadero')->exists()) {
+                $user->assignRole('ganadero');
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('No se pudo asignar el rol ganadero: ' . $e->getMessage());
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

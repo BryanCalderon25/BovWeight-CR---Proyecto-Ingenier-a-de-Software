@@ -26,6 +26,12 @@ const rutas = [
     beforeEnter: evitarAutenticados
   },
   {
+    path: '/registro',
+    name: 'Registro',
+    component: () => import('@/views/RegisterView.vue'),
+    beforeEnter: evitarAutenticados
+  },
+  {
     path: '/olvide-contrasena',
     name: 'OlvideContrasena',
     component: () => import('@/views/OlvideContrasenaView.vue'),
