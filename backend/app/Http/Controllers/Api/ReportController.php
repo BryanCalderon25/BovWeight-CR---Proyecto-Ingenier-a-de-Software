@@ -200,6 +200,52 @@ class ReportController extends Controller
             }
             .badge-ia { background-color: #D0E8D0; color: #2E5C2E; }
             .badge-pendiente { background-color: #F0EDD8; color: #6B5A1A; }
+            .badge-activo { background-color: #D0E8D0; color: #2E5C2E; }
+            .badge-inactivo { background-color: #F5C6CB; color: #721C24; }
+
+            /* ── Resumen del período ── */
+            .resumen-seccion {
+                background-color: #F4F6F0;
+                border-left: 4px solid #656D4A;
+                border-radius: 4px;
+                padding: 12px 16px;
+                margin: 16px 0;
+            }
+            .resumen-titulo {
+                font-weight: bold;
+                color: #414833;
+                font-size: 13px;
+                margin: 0 0 4px 0;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .resumen-texto {
+                margin: 0;
+                font-size: 12px;
+                color: #2B2D2F;
+                line-height: 1.5;
+            }
+
+            /* ── Recomendación ── */
+            .recomendacion-seccion {
+                border-top: 1px dashed #C2C5AA;
+                margin-top: 24px;
+                padding-top: 12px;
+            }
+            .recomendacion-titulo {
+                font-weight: bold;
+                color: #414833;
+                font-size: 11px;
+                margin: 0 0 4px 0;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .recomendacion-texto {
+                margin: 0;
+                font-size: 11px;
+                color: #5A5C5E;
+                line-height: 1.4;
+            }
 
             /* ── Pie de página ── */
             .footer {
@@ -219,6 +265,9 @@ class ReportController extends Controller
                 Las estimaciones presentadas en este reporte son generadas mediante BovWeight CR
                 como apoyo para la gestión ganadera. <strong>No sustituyen una báscula oficial certificada</strong>
                 ni deben utilizarse como único respaldo para transacciones comerciales o legales.
+            </p>
+            <p class="aviso-tecnico-texto" style="margin-top: 6px; font-weight: bold; color: #8A6D1A;">
+                Este reporte es una ayuda para el control de la finca. No reemplaza una báscula oficial para ventas, compras o trámites legales.
             </p>
         </div>';
 
@@ -267,6 +316,30 @@ class ReportController extends Controller
                     ? $ultimoPesajeMes->fecha_pesaje->format('d/m/Y')
                     : Carbon::parse($ultimoPesajeMes->fecha_pesaje)->format('d/m/Y'))
                 : null;
+
+            // ── Consulta de animales activos en el contexto de pesajes ────
+            $queryAnimalesActivos = Animal::query();
+            if ($isGuest) {
+                $queryAnimalesActivos->where('farm_id', $user->invited_farm_id);
+            } else {
+                $queryAnimalesActivos->whereHas('farm', fn($q) => $q->where('user_id', $user->id));
+            }
+            if ($fincaId && !$isGuest) {
+                $queryAnimalesActivos->where('farm_id', $fincaId);
+            }
+            $totalAnimalesActivos = $queryAnimalesActivos->count();
+
+            // ── Buscar pesos max y min de pesajes del mes en memoria ──────
+            $ultimoPesajeMax = $pesajesMes->sortByDesc('peso_estimado')->first();
+            $ultimoPesajeMin = $pesajesMes->sortBy('peso_estimado')->first();
+
+            $textoResumen = 'Durante ' . htmlspecialchars(mb_strtolower($periodoTexto)) . ' se registraron ' . $totalAnimalesActivos . ' ' . ($totalAnimalesActivos == 1 ? 'animal activo' : 'animales activos') . ' y ' . $totalMes . ' ' . ($totalMes == 1 ? 'pesaje' : 'pesajes') . '.<br>';
+            $textoResumen .= 'El peso promedio del hato fue de ' . ($promMes !== null ? $promMes . ' kg' : '—') . '.<br>';
+            if ($ultimoPesajeMax && $ultimoPesajeMin) {
+                $textoResumen .= 'Animal con mayor peso: ' . htmlspecialchars($ultimoPesajeMax->animal->nombre) . ' (' . round($ultimoPesajeMax->peso_estimado) . ' kg).<br>';
+                $textoResumen .= 'Animal con menor peso: ' . htmlspecialchars($ultimoPesajeMin->animal->nombre) . ' (' . round($ultimoPesajeMin->peso_estimado) . ' kg).<br>';
+            }
+            $textoResumen .= 'La información presentada sirve como apoyo para el control y seguimiento del ganado de la finca.';
 
             // ── HTML: Encabezado ──────────────────────────────────────────
             $html .= '
@@ -324,7 +397,7 @@ class ReportController extends Controller
                             <p class="metrica-valor">' . $totalMes . '</p>
                         </td>
                         <td class="metrica-celda">
-                            <p class="metrica-etiqueta">Peso promedio estimado</p>
+                            <p class="metrica-etiqueta">Peso promedio del hato</p>
                             <p class="metrica-valor">' . ($promMes !== null ? $promMes . ' kg' : '—') . '</p>
                         </td>
                     </tr>
@@ -344,7 +417,7 @@ class ReportController extends Controller
                             <p class="metrica-valor-sm">' . $pesajesManuales . '</p>
                         </td>
                         <td class="metrica-celda">
-                            <p class="metrica-etiqueta">Pesajes estimados por IA (YOLOv8)</p>
+                            <p class="metrica-etiqueta">Pesajes estimados mediante fotografía (IA) (YOLOv8)</p>
                             <p class="metrica-valor-sm">' . $pesajesIA . '</p>
                         </td>
                     </tr>
@@ -356,6 +429,15 @@ class ReportController extends Controller
                     </tr>
                 </table>';
             }
+
+            // ── HTML: Resumen del período ─────────────────────────────────
+            $html .= '
+            <div class="resumen-seccion">
+                <p class="resumen-titulo">Resumen del período</p>
+                <p class="resumen-texto">
+                    ' . $textoResumen . '
+                </p>
+            </div>';
 
             // ── HTML: Tabla histórica ─────────────────────────────────────
             $html .= '<p class="tabla-titulo">Registros Históricos de Pesaje</p>';
@@ -448,6 +530,18 @@ class ReportController extends Controller
                     : Carbon::parse($ultimoRegistro->fecha_pesaje)->format('d/m/Y'))
                 : null;
 
+            // ── Buscar animal con mayor y menor peso del hato en memoria ──
+            $animalMax = $animalesConPeso->sortByDesc('peso_actual')->first();
+            $animalMin = $animalesConPeso->sortBy('peso_actual')->first();
+
+            $textoResumen = 'Durante ' . htmlspecialchars(mb_strtolower($periodoTexto)) . ' se registraron ' . $totalAnimales . ' ' . ($totalAnimales == 1 ? 'animal activo' : 'animales activos') . ' y ' . $totalPesajesMes . ' ' . ($totalPesajesMes == 1 ? 'pesaje' : 'pesajes') . '.<br>';
+            $textoResumen .= 'El peso promedio del hato fue de ' . ($pesoPromedio !== null ? $pesoPromedio . ' kg' : '—') . '.<br>';
+            if ($animalMax && $animalMin) {
+                $textoResumen .= 'Animal con mayor peso: ' . htmlspecialchars($animalMax->nombre) . ' (' . round($animalMax->peso_actual) . ' kg).<br>';
+                $textoResumen .= 'Animal con menor peso: ' . htmlspecialchars($animalMin->nombre) . ' (' . round($animalMin->peso_actual) . ' kg).<br>';
+            }
+            $textoResumen .= 'La información presentada sirve como apoyo para el control y seguimiento del ganado de la finca.';
+
             // ── HTML: Encabezado ──────────────────────────────────────────
             $html .= '
             <div class="encabezado">
@@ -511,7 +605,7 @@ class ReportController extends Controller
                             <p class="metrica-valor-sm">' . $sinPeso . '</p>
                         </td>
                         <td class="metrica-celda">
-                            <p class="metrica-etiqueta">Peso promedio estimado</p>
+                            <p class="metrica-etiqueta">Peso promedio del hato</p>
                             <p class="metrica-valor-sm">' . ($pesoPromedio !== null ? $pesoPromedio . ' kg' : '—') . '</p>
                         </td>
                     </tr>
@@ -547,6 +641,15 @@ class ReportController extends Controller
                 }
             }
 
+            // ── HTML: Resumen del período ─────────────────────────────────
+            $html .= '
+            <div class="resumen-seccion">
+                <p class="resumen-titulo">Resumen del período</p>
+                <p class="resumen-texto">
+                    ' . $textoResumen . '
+                </p>
+            </div>';
+
             // ── HTML: Tabla de ganado ─────────────────────────────────────
             $html .= '<p class="tabla-titulo">Ganado Registrado</p>';
 
@@ -573,10 +676,10 @@ class ReportController extends Controller
                     <tbody>';
 
                 foreach ($animales as $animal) {
-                    $tienePeso  = $animal->peso_actual !== null && $animal->peso_actual > 0;
-                    $pesoBadge  = $tienePeso ? 'badge badge-ia' : 'badge badge-pendiente';
-                    $pesoEstado = $tienePeso ? 'Con peso' : 'Pendiente';
-                    $pesoTexto  = $tienePeso ? round($animal->peso_actual) . ' kg' : 'Sin pesar';
+                    $tienePeso   = $animal->peso_actual !== null && $animal->peso_actual > 0;
+                    $pesoTexto   = $tienePeso ? round($animal->peso_actual) . ' kg' : 'Sin pesar';
+                    $estadoTexto = ($animal->deleted_at !== null) ? 'Inactivo' : 'Activo';
+                    $estadoBadge = ($animal->deleted_at !== null) ? 'badge badge-inactivo' : 'badge badge-activo';
 
                     $html .= '
                         <tr>
@@ -586,7 +689,7 @@ class ReportController extends Controller
                             <td>' . htmlspecialchars($animal->genero) . '</td>
                             <td>' . htmlspecialchars($animal->farm->nombre) . '</td>
                             <td><strong>' . $pesoTexto . '</strong></td>
-                            <td><span class="' . $pesoBadge . '">' . $pesoEstado . '</span></td>
+                            <td><span class="' . $estadoBadge . '">' . $estadoTexto . '</span></td>
                         </tr>';
                 }
 
