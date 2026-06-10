@@ -23,6 +23,7 @@ Route::post('/invitaciones/resolver/{token}', [FarmInvitationController::class, 
 Route::middleware('auth:sanctum')->group(function () {
     // Perfil y Sesión
     Route::get('/perfil', [AuthController::class, 'profile']);
+    Route::get('/user/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Fincas (Farms)

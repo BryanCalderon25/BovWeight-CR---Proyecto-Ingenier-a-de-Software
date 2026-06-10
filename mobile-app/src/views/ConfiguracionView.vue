@@ -10,10 +10,10 @@
       <div class="config-contenido">
         <!-- Perfil -->
         <div class="config-perfil animar-aparecer">
-          <div class="config-avatar">{{ almacenAuth.usuario?.nombre?.charAt(0) || 'U' }}</div>
+          <div class="config-avatar">{{ almacenAuth.nombreCompleto?.charAt(0) || 'U' }}</div>
           <div>
             <h3 style="font-family:var(--fuente-display);font-weight:700">{{ almacenAuth.nombreCompleto || 'Usuario' }}</h3>
-            <p style="font-size:var(--tamano-xs);color:var(--texto-terciario)">{{ almacenAuth.usuario?.correo || '' }}</p>
+            <p style="font-size:var(--tamano-xs);color:var(--texto-terciario)">{{ almacenAuth.usuario?.email || '' }}</p>
             <span class="insignia insignia--primario" style="margin-top:4px">{{ almacenAuth.rolUsuario }}</span>
           </div>
         </div>
@@ -92,8 +92,8 @@ function alternarModoOscuro() {
 function irAFincas() { router.push('/app/fincas'); }
 function irAReportes() { router.push('/app/reportes'); }
 
-function cerrarSesion() {
-  almacenAuth.cerrarSesion();
+async function cerrarSesion() {
+  await almacenAuth.cerrarSesion();
   router.replace('/login');
 }
 </script>
