@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\FarmInvitationController;
 
 Route::post('/registro', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/invitaciones/resolver/{token}', [FarmInvitationController::class, 'resolveGuestAccess']);
 
 Route::middleware('auth:sanctum')->group(function () {

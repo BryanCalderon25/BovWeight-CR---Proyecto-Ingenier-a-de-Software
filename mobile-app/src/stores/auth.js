@@ -83,12 +83,46 @@ export const useAlmacenAuth = defineStore('auth', () => {
     }
   }
 
-  async function recuperarContrasena(correo) {
+  async function solicitarRecuperacionPassword(email) {
     cargando.value = true;
+    error.value = '';
     try {
-      // Nota: Implementar endpoint en Laravel si es necesario
-      await new Promise(r => setTimeout(r, 1000));
-      return { exito: true, mensaje: 'Se envió un enlace de recuperación a su correo.' };
+      const respuesta = await api.post('/forgot-password', { email });
+      return { exito: true, mensaje: respuesta.data?.mensaje || respuesta.data?.message };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al solicitar la recuperación.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function restablecerPassword(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.post('/reset-password', {
+        email: datos.email,
+        token: datos.token,
+        password: datos.password,
+        password_confirmation: datos.password_confirmation
+      });
+      return { exito: true, mensaje: respuesta.data?.mensaje || respuesta.data?.message };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else if (err.response.status === 422) {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.';
+      } else if (err.response.status === 400) {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'El enlace venció o no es válido.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al restablecer la contraseña.';
+      }
+      return { exito: false, error: error.value };
     } finally {
       cargando.value = false;
     }
@@ -97,6 +131,7 @@ export const useAlmacenAuth = defineStore('auth', () => {
   return {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
-    iniciarSesion, cerrarSesion, obtenerPerfil, recuperarContrasena, iniciarSesionInvitado
+    iniciarSesion, cerrarSesion, obtenerPerfil, iniciarSesionInvitado,
+    solicitarRecuperacionPassword, restablecerPassword
   };
 });

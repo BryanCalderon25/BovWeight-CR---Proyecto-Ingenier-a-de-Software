@@ -15,60 +15,56 @@
               <circle cx="35" cy="28" r="2.5" fill="#C2C5AA"/>
             </svg>
           </div>
-          <h1 class="login-titulo">BovWeight <span>CR</span></h1>
-          <p class="login-subtitulo">Inicie sesión para continuar</p>
+          <h1 class="login-titulo">Nueva contraseña</h1>
+          <p class="login-subtitulo">Ingrese su nueva contraseña. Debe usar mínimo 8 caracteres, incluir mayúscula, minúscula y un número.</p>
         </div>
 
-        <form class="login-formulario vidrio animar-aparecer animar-delay-1" @submit.prevent="manejarLogin">
+        <form class="login-formulario vidrio animar-aparecer animar-delay-1" @submit.prevent="manejarRestablecer">
           <div class="campo-grupo">
-            <label class="campo-etiqueta" for="correo">Correo electrónico</label>
-            <input id="correo" type="email" class="campo-entrada" :class="{ 'campo-entrada--error': errores.correo }"
-              v-model="formulario.correo" placeholder="usuario@ejemplo.com" autocomplete="email" />
-            <span v-if="errores.correo" class="campo-error">{{ errores.correo }}</span>
-          </div>
-
-          <div class="campo-grupo">
-            <label class="campo-etiqueta" for="contrasena">Contraseña</label>
+            <label class="campo-etiqueta" for="password">Nueva contraseña</label>
             <div style="position:relative">
-              <input id="contrasena" :type="mostrarContrasena ? 'text' : 'password'" class="campo-entrada"
-                :class="{ 'campo-entrada--error': errores.contrasena }" v-model="formulario.contrasena"
-                placeholder="••••••••" autocomplete="current-password" />
-              <button type="button" class="login-ojo" @click="mostrarContrasena = !mostrarContrasena">
-                {{ mostrarContrasena ? '🙈' : '👁️' }}
+              <input id="password" :type="mostrarPassword ? 'text' : 'password'" class="campo-entrada"
+                :class="{ 'campo-entrada--error': errores.password }" v-model="formulario.password"
+                placeholder="••••••••" autocomplete="new-password" />
+              <button type="button" class="login-ojo" @click="mostrarPassword = !mostrarPassword">
+                {{ mostrarPassword ? '🙈' : '👁️' }}
               </button>
             </div>
-            <span v-if="errores.contrasena" class="campo-error">{{ errores.contrasena }}</span>
+            <span v-if="errores.password" class="campo-error">{{ errores.password }}</span>
           </div>
 
-          <button type="button" class="login-olvido" @click="router.push('/olvide-contrasena')">
-            ¿Olvidó su contraseña?
-          </button>
+          <div class="campo-grupo">
+            <label class="campo-etiqueta" for="password_confirmation">Confirmar contraseña</label>
+            <div style="position:relative">
+              <input id="password_confirmation" :type="mostrarConfirmarPassword ? 'text' : 'password'" class="campo-entrada"
+                :class="{ 'campo-entrada--error': errores.password_confirmation }" v-model="formulario.password_confirmation"
+                placeholder="••••••••" autocomplete="new-password" />
+              <button type="button" class="login-ojo" @click="mostrarConfirmarPassword = !mostrarConfirmarPassword">
+                {{ mostrarConfirmarPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
+            <span v-if="errores.password_confirmation" class="campo-error">{{ errores.password_confirmation }}</span>
+          </div>
 
           <button type="submit" class="boton boton--primario boton--completo boton--grande"
             :disabled="almacenAuth.cargando">
             <span v-if="almacenAuth.cargando" class="cargando-spinner" style="width:20px;height:20px;border-width:2px"></span>
-            <span v-else>Iniciar Sesión</span>
+            <span v-else>Actualizar contraseña</span>
           </button>
 
           <p v-if="almacenAuth.error" class="login-error-general">{{ almacenAuth.error }}</p>
         </form>
 
         <p class="login-registro animar-aparecer animar-delay-2">
-          ¿No tiene cuenta? <a href="#" @click.prevent>Regístrese aquí</a>
+          <a href="#" @click.prevent="router.push('/login')">Cancelar y volver al login</a>
         </p>
-
-        <!-- Toast de éxito local -->
-        <div v-if="mensajeExito" class="toast toast--exito">
-          {{ mensajeExito }}
-        </div>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-/* Vista de Login con glassmorphism y validaciones */
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { IonPage, IonContent } from '@ionic/vue';
 import { useAlmacenAuth } from '@/stores/auth.js';
@@ -77,54 +73,63 @@ const router = useRouter();
 const route = useRoute();
 const almacenAuth = useAlmacenAuth();
 
-const formulario = reactive({ correo: '', contrasena: '' });
-const errores = reactive({ correo: '', contrasena: '' });
-const mostrarContrasena = ref(false);
-const mensajeExito = ref('');
+const formulario = reactive({
+  email: '',
+  token: '',
+  password: '',
+  password_confirmation: ''
+});
 
-watch(
-  () => route.query.restablecido,
-  (nuevoValor) => {
-    if (nuevoValor === 'true') {
-      mensajeExito.value = 'Contraseña actualizada correctamente. Ya puede iniciar sesión.';
-      setTimeout(() => {
-        mensajeExito.value = '';
-      }, 5000);
-    }
-  },
-  { immediate: true }
-);
+const errores = reactive({
+  password: '',
+  password_confirmation: ''
+});
+
+const mostrarPassword = ref(false);
+const mostrarConfirmarPassword = ref(false);
+
+onMounted(() => {
+  formulario.email = route.query.email || '';
+  formulario.token = route.query.token || '';
+});
 
 function validarFormulario() {
   let esValido = true;
-  errores.correo = '';
-  errores.contrasena = '';
+  errores.password = '';
+  errores.password_confirmation = '';
 
-  if (!formulario.correo) {
-    errores.correo = 'El correo es obligatorio';
+  if (!formulario.password) {
+    errores.password = 'Ingrese una contraseña.';
     esValido = false;
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formulario.correo)) {
-    errores.correo = 'Ingrese un correo válido';
-    esValido = false;
-  }
-  if (!formulario.contrasena) {
-    errores.contrasena = 'La contraseña es obligatoria';
-    esValido = false;
-  } else if (formulario.contrasena.length < 4) {
-    errores.contrasena = 'Mínimo 4 caracteres';
+  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(formulario.password)) {
+    errores.password = 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.';
     esValido = false;
   }
+
+  if (!formulario.password_confirmation) {
+    errores.password_confirmation = 'Confirme su contraseña.';
+    esValido = false;
+  } else if (formulario.password !== formulario.password_confirmation) {
+    errores.password_confirmation = 'Las contraseñas no coinciden.';
+    esValido = false;
+  }
+
+  if (!formulario.email || !formulario.token) {
+    almacenAuth.error = 'El enlace venció o no es válido.';
+    esValido = false;
+  }
+
   return esValido;
 }
 
-async function manejarLogin() {
+async function manejarRestablecer() {
   if (!validarFormulario()) return;
-  const resultado = await almacenAuth.iniciarSesion(formulario);
+
+  const resultado = await almacenAuth.restablecerPassword(formulario);
   if (resultado.exito) {
-    router.replace('/app/inicio');
+    router.replace({ path: '/login', query: { restablecido: 'true' } });
   }
 }
-
 </script>
 
 <style scoped>
@@ -141,14 +146,13 @@ async function manejarLogin() {
   justify-content: center; min-height: 100%; padding: 32px 24px; gap: 24px;
   position: relative; z-index: 1;
 }
-.login-cabecera { text-align: center; }
+.login-cabecera { text-align: center; max-width: 420px; }
 .login-logo svg { width: 72px; height: 72px; margin-bottom: 16px; }
 .login-titulo {
-  font-family: var(--fuente-display); font-size: 2rem; font-weight: 800;
+  font-family: var(--fuente-display); font-size: 1.75rem; font-weight: 800;
   color: var(--texto-primario);
 }
-.login-titulo span { color: var(--acento); }
-.login-subtitulo { color: var(--texto-secundario); font-size: var(--tamano-sm); margin-top: 4px; }
+.login-subtitulo { color: var(--texto-secundario); font-size: var(--tamano-sm); margin-top: 8px; line-height: 1.5; }
 .login-formulario {
   width: 100%; max-width: 380px; padding: 32px 24px;
   border-radius: var(--borde-radio-xl); display: flex; flex-direction: column; gap: 16px;
@@ -157,12 +161,6 @@ async function manejarLogin() {
   position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
   background: none; border: none; cursor: pointer; font-size: 16px;
 }
-.login-olvido {
-  background: none; border: none; color: var(--primario-medio);
-  font-size: var(--tamano-sm); cursor: pointer; text-align: right;
-  font-family: var(--fuente-cuerpo);
-}
-.login-olvido:hover { color: var(--primario); text-decoration: underline; }
 .login-error-general {
   text-align: center; color: var(--peligro); font-size: var(--tamano-sm);
   background: var(--peligro-suave); padding: 8px; border-radius: var(--borde-radio-sm);
