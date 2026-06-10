@@ -214,7 +214,7 @@ class ReportController extends Controller
         // ── Aviso técnico (bloque reutilizable) ──────────────────────────────
         $avisoTecnico = '
         <div class="aviso-tecnico">
-            <p class="aviso-tecnico-titulo">⚠ Advertencia Técnica — Estimaciones de IA</p>
+            <p class="aviso-tecnico-titulo"> Advertencia Técnica — Estimaciones de IA</p>
             <p class="aviso-tecnico-texto">
                 Las estimaciones presentadas en este reporte son generadas mediante BovWeight CR
                 como apoyo para la gestión ganadera. <strong>No sustituyen una báscula oficial certificada</strong>
