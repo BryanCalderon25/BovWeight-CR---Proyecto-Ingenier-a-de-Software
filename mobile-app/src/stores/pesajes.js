@@ -3,6 +3,14 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import api from '@/services/api';
 
+function formatearSoloFecha(fechaRaw) {
+  if (!fechaRaw) return '';
+  if (typeof fechaRaw === 'string') {
+    return fechaRaw.split('T')[0].split(' ')[0];
+  }
+  return fechaRaw;
+}
+
 export const useAlmacenPesajes = defineStore('pesajes', () => {
   const lista = ref([]);
   const cargando = ref(false);
@@ -32,7 +40,7 @@ export const useAlmacenPesajes = defineStore('pesajes', () => {
           raza: animalRaza,
           pesoEstimado: Math.round(Number(p.peso_estimado || p.pesoEstimado || 0)),
           finca: fincaNombre,
-          fecha: p.fecha_pesaje || p.fecha || '',
+          fecha: formatearSoloFecha(p.fecha_pesaje || p.fecha),
           confianza: confianza
         };
       });
@@ -231,7 +239,7 @@ export const useAlmacenPesajes = defineStore('pesajes', () => {
           pesoEstimado: Math.round(Number(p.peso_estimado || p.pesoEstimado || 0)),
           margenError: margenError,
           confianza: confianza,
-          fecha: p.fecha_pesaje || p.fecha || ''
+          fecha: formatearSoloFecha(p.fecha_pesaje || p.fecha)
         };
       });
   }

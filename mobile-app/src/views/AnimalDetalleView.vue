@@ -17,10 +17,10 @@
       <div v-if="animal" class="detalle-contenido">
         <!-- Cabecera del animal -->
         <div class="detalle-cabecera animar-aparecer">
-          <div class="detalle-avatar">{{ animal.nombre.charAt(0) }}</div>
-          <h2 class="titulo-seccion">{{ animal.nombre }}</h2>
-          <span class="insignia" :class="animal.estado === 'activo' ? 'insignia--exito' : 'insignia--peligro'">
-            {{ animal.estado }}
+          <div class="detalle-avatar">{{ (animal.nombre || 'A').charAt(0) }}</div>
+          <h2 class="titulo-seccion">{{ animal.nombre || 'Sin nombre' }}</h2>
+          <span class="insignia" :class="animal.estado === 'inactivo' ? 'insignia--peligro' : 'insignia--exito'">
+            {{ animal.estado === 'inactivo' ? 'Inactivo' : 'Activo' }}
           </span>
           <p style="font-size:var(--tamano-sm);color:var(--texto-terciario)">{{ animal.arete }} · {{ animal.raza }}</p>
         </div>
@@ -29,19 +29,19 @@
         <div class="detalle-info animar-aparecer animar-delay-1">
           <div class="detalle-info-item">
             <span class="campo-etiqueta">Sexo</span>
-            <span>{{ animal.sexo }}</span>
+            <span>{{ animalSexo }}</span>
           </div>
           <div class="detalle-info-item">
             <span class="campo-etiqueta">Edad</span>
-            <span>{{ animal.edad }}</span>
+            <span>{{ animalEdad }}</span>
           </div>
           <div class="detalle-info-item">
             <span class="campo-etiqueta">Finca</span>
-            <span>{{ animal.fincaNombre }}</span>
+            <span>{{ animalFinca }}</span>
           </div>
           <div class="detalle-info-item">
             <span class="campo-etiqueta">Último Pesaje</span>
-            <span>{{ animal.ultimoPesaje }}</span>
+            <span>{{ animalUltimoPesaje }}</span>
           </div>
         </div>
 
@@ -49,7 +49,7 @@
         <div class="tarjeta tarjeta--metrica animar-aparecer animar-delay-2">
           <span class="etiqueta-seccion">PESO ACTUAL</span>
           <div style="display:flex;align-items:baseline;margin-top:8px">
-            <span class="metrica-grande">{{ animal.pesoActual }}</span>
+            <span class="metrica-grande">{{ animalPesoActual }}</span>
             <span class="metrica-unidad">kg</span>
           </div>
         </div>
@@ -77,7 +77,8 @@
         <!-- Acciones -->
         <div class="detalle-acciones animar-aparecer animar-delay-4" v-if="almacenAuth.rolUsuario !== 'invitado'">
           <button class="boton boton--primario boton--completo" @click="irAPesar">📷 Nuevo Pesaje</button>
-          <button class="boton boton--secundario boton--completo" @click="confirmarEliminar">🗑️ Eliminar Animal</button>
+          <button class="boton boton--secundario boton--completo" @click="cambiarEstado">🔄 Cambiar Estado Animal</button>
+          <button class="boton boton--secundario boton--completo" @click="confirmarEliminar" style="color:var(--peligro)">🗑️ Eliminar Animal</button>
         </div>
 
         <!-- Modal edición -->
@@ -96,8 +97,27 @@
               </select>
             </div>
             <div class="campo-grupo">
-              <label class="campo-etiqueta">Edad</label>
-              <input class="campo-entrada" v-model="formularioEdicion.edad" />
+              <label class="campo-etiqueta">Género</label>
+              <select class="campo-entrada" v-model="formularioEdicion.genero">
+                <option value="Macho">Macho</option>
+                <option value="Hembra">Hembra</option>
+              </select>
+            </div>
+            <div class="campo-grupo">
+              <label class="campo-etiqueta">Fecha de Nacimiento</label>
+              <input type="date" class="campo-entrada" v-model="formularioEdicion.fecha_nacimiento" />
+            </div>
+            <div class="campo-grupo">
+              <label class="campo-etiqueta">Propósito</label>
+              <select class="campo-entrada" v-model="formularioEdicion.proposito">
+                <option value="Carne">Carne</option>
+                <option value="Leche">Leche</option>
+                <option value="Doble propósito">Doble propósito</option>
+              </select>
+            </div>
+            <div class="campo-grupo">
+              <label class="campo-etiqueta">Notas</label>
+              <textarea class="campo-entrada" v-model="formularioEdicion.notas" rows="3" style="resize:vertical"></textarea>
             </div>
             <div style="display:flex;gap:12px">
               <button class="boton boton--secundario" style="flex:1" @click="editando = false">Cancelar</button>
@@ -120,22 +140,81 @@
 /* Vista de Detalle de Animal */
 import { ref, computed, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonBackButton } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonBackButton, alertController } from '@ionic/vue';
 import { createOutline, closeOutline } from 'ionicons/icons';
 import { useAlmacenAnimales } from '@/stores/animales.js';
 import { useAlmacenPesajes } from '@/stores/pesajes.js';
 import { useAlmacenAuth } from '@/stores/auth.js';
+import { useAlmacenFincas } from '@/stores/fincas.js';
 
 const route = useRoute();
 const router = useRouter();
 const almacenAnimales = useAlmacenAnimales();
 const almacenPesajes = useAlmacenPesajes();
 const almacenAuth = useAlmacenAuth();
+const almacenFincas = useAlmacenFincas();
 
 const animal = computed(() => almacenAnimales.obtenerPorId(route.params.id));
 const historial = computed(() => almacenPesajes.obtenerHistorialAnimal(route.params.id));
 const editando = ref(false);
-const formularioEdicion = reactive({ nombre: '', estado: '', edad: '' });
+const formularioEdicion = reactive({
+  nombre: '',
+  genero: 'Macho',
+  fecha_nacimiento: '',
+  proposito: 'Carne',
+  estado: 'activo',
+  notas: ''
+});
+
+// Computed properties mapping to database values
+const animalSexo = computed(() => {
+  return animal.value?.genero || 'No especificado';
+});
+
+const animalEdad = computed(() => {
+  if (!animal.value?.fecha_nacimiento) return 'No especificada';
+  const nac = new Date(animal.value.fecha_nacimiento);
+  const hoy = new Date();
+  let anos = hoy.getFullYear() - nac.getFullYear();
+  let meses = hoy.getMonth() - nac.getMonth();
+  if (meses < 0 || (meses === 0 && hoy.getDate() < nac.getDate())) {
+    anos--;
+    meses += 12;
+  }
+  if (anos > 0) {
+    return `${anos} año${anos > 1 ? 's' : ''} ${meses > 0 ? `y ${meses} mes${meses > 1 ? 'es' : ''}` : ''}`;
+  }
+  return `${meses} mes${meses > 1 ? 'es' : ''}`;
+});
+
+const animalFinca = computed(() => {
+  if (animal.value?.farm?.nombre) {
+    return animal.value.farm.nombre;
+  }
+  if (animal.value?.farm_id) {
+    const f = almacenFincas.lista.find(f => Number(f.id) === Number(animal.value.farm_id));
+    if (f) return f.nombre;
+  }
+  return 'No especificada';
+});
+
+const animalUltimoPesaje = computed(() => {
+  if (historial.value && historial.value.length > 0) {
+    const ultimo = historial.value[0];
+    return `${ultimo.pesoEstimado} kg (${ultimo.fecha})`;
+  }
+  return 'Sin registros';
+});
+
+const animalPesoActual = computed(() => {
+  if (animal.value?.peso_actual) {
+    return Math.round(Number(animal.value.peso_actual));
+  }
+  if (historial.value && historial.value.length > 0) {
+    return historial.value[0].pesoEstimado;
+  }
+  return '—';
+});
 
 onMounted(async () => {
   // Cargar datos del animal desde el servidor si no están cargados localmente
@@ -146,10 +225,18 @@ onMounted(async () => {
   // Cargar historial de pesajes real para este animal
   await almacenPesajes.cargarHistorialAnimal(route.params.id);
 
+  // Asegurar que las fincas estén cargadas para mapear el nombre de la finca
+  if (almacenFincas.lista.length === 0) {
+    await almacenFincas.cargarFincas();
+  }
+
   if (animal.value) {
-    formularioEdicion.nombre = animal.value.nombre;
-    formularioEdicion.estado = animal.value.estado;
-    formularioEdicion.edad = animal.value.edad;
+    formularioEdicion.nombre = animal.value.nombre || '';
+    formularioEdicion.genero = animal.value.genero || 'Macho';
+    formularioEdicion.fecha_nacimiento = animal.value.fecha_nacimiento || '';
+    formularioEdicion.proposito = animal.value.proposito || 'Carne';
+    formularioEdicion.estado = animal.value.estado || 'activo';
+    formularioEdicion.notas = animal.value.notas || '';
   }
 });
 
@@ -159,6 +246,48 @@ function guardarEdicion() {
 }
 
 function irAPesar() { router.push('/app/pesar'); }
+
+async function cambiarEstado() {
+  const alertSheet = await alertController.create({
+    header: 'Cambiar Estado del Animal',
+    inputs: [
+      {
+        type: 'radio',
+        label: 'Activo',
+        value: 'activo',
+        checked: animal.value.estado !== 'inactivo'
+      },
+      {
+        type: 'radio',
+        label: 'Inactivo',
+        value: 'inactivo',
+        checked: animal.value.estado === 'inactivo'
+      }
+    ],
+    buttons: [
+      {
+        text: 'Cancelar',
+        role: 'cancel'
+      },
+      {
+        text: 'Confirmar',
+        handler: async (nuevoEstado) => {
+          if (!nuevoEstado) return;
+          const resultado = await almacenAnimales.actualizarAnimal(route.params.id, {
+            estado: nuevoEstado
+          });
+          if (resultado.exito) {
+            await almacenAnimales.cargarAnimal(route.params.id);
+          } else {
+            alert(resultado.error || 'Error al actualizar el estado.');
+          }
+        }
+      }
+    ]
+  });
+
+  await alertSheet.present();
+}
 
 function confirmarEliminar() {
   if (confirm('¿Está seguro de eliminar este animal?')) {

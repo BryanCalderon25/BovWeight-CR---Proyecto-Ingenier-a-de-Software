@@ -7,7 +7,7 @@
           <span class="encabezado-titulo__cr">CR</span>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="mostrarFormulario = true">
+          <ion-button @click="abrirFormulario">
             <ion-icon :icon="addOutline" />
           </ion-button>
         </ion-buttons>
@@ -35,7 +35,7 @@
           </select>
           <select class="filtro-select" v-model="almacen.filtroRaza">
             <option value="">Todas las razas</option>
-            <option v-for="raza in almacen.razasDisponibles" :key="raza" :value="raza">{{ raza }}</option>
+            <option v-for="raza in razasParaFiltrar" :key="raza" :value="raza">{{ raza }}</option>
           </select>
         </div>
 
@@ -89,7 +89,15 @@
           </div>
           <div class="campo-grupo">
             <label class="campo-etiqueta">Raza</label>
-            <input class="campo-entrada" v-model="nuevoAnimal.raza" placeholder="Brahman" />
+            <select class="campo-entrada" v-model="razaSeleccionada">
+              <option value="" disabled>Seleccione una raza...</option>
+              <option v-for="r in razasCatalogo" :key="r" :value="r">{{ r }}</option>
+              <option value="Otro">Otro (Especificar)</option>
+            </select>
+          </div>
+          <div v-if="razaSeleccionada === 'Otro'" class="campo-grupo" style="margin-top:-6px">
+            <label class="campo-etiqueta">Especificar Raza</label>
+            <input class="campo-entrada" v-model="razaPersonalizada" placeholder="Ej. Guzerat, Senepol" />
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="campo-grupo">
@@ -121,7 +129,7 @@
 
 <script setup>
 /* Vista de Animales con búsqueda, filtros y CRUD */
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
 import { addOutline, chevronForwardOutline } from 'ionicons/icons';
@@ -134,10 +142,42 @@ const almacenFincas = useAlmacenFincas();
 
 const mostrarFormulario = ref(false);
 const numeroAreteIngresado = ref('');
+const razaSeleccionada = ref('');
+const razaPersonalizada = ref('');
+
+const razasCatalogo = [
+  'Brahman',
+  'Holstein',
+  'Jersey',
+  'Gyr',
+  'Nelore',
+  'Girolando',
+  'Pardo Suizo',
+  'Angus',
+  'Charolais',
+  'Senepol',
+  'Simmental',
+  'Guzerat',
+  'Criollo',
+  'Cruzado'
+];
+
+const razasParaFiltrar = computed(() => {
+  const combinadas = new Set([...razasCatalogo, ...almacen.razasDisponibles]);
+  return [...combinadas].sort();
+});
+
 const nuevoAnimal = reactive({
   arete: '', nombre: '', raza: '', genero: 'Macho', fecha_nacimiento: '',
   farm_id: null, peso_actual: 0, notas: ''
 });
+
+function abrirFormulario() {
+  nuevoAnimal.farm_id = almacen.filtroFinca;
+  razaSeleccionada.value = '';
+  razaPersonalizada.value = '';
+  mostrarFormulario.value = true;
+}
 
 onMounted(async () => {
   if (almacenFincas.lista.length === 0) {
@@ -182,10 +222,20 @@ async function guardarAnimal() {
     return;
   }
   
+  const razaFinal = razaSeleccionada.value === 'Otro' ? razaPersonalizada.value.trim() : razaSeleccionada.value;
+  if (!razaFinal) {
+    alert('Por favor seleccione o especifique una raza.');
+    return;
+  }
+  
+  nuevoAnimal.raza = razaFinal;
+  
   const resultado = await almacen.agregarAnimal({ ...nuevoAnimal });
   if (resultado.exito) {
     mostrarFormulario.value = false;
     numeroAreteIngresado.value = '';
+    razaSeleccionada.value = '';
+    razaPersonalizada.value = '';
     Object.assign(nuevoAnimal, { arete: '', nombre: '', raza: '', genero: 'Macho', fecha_nacimiento: '', farm_id: almacen.filtroFinca });
   } else {
     alert(resultado.error);

@@ -177,7 +177,13 @@ watch(
 
 onMounted(async () => {
   await almacenFincas.cargarFincas();
-  // Nota: Podríamos cargar animales de la primera finca por defecto o un resumen global si existiera
+  if (almacenFincas.lista.length > 0) {
+    const defaultFarmId = almacenFincas.lista[0].id;
+    await Promise.all([
+      almacenAnimales.cargarAnimalesPorFinca(defaultFarmId),
+      almacenPesajes.cargarTodosLosPesajes()
+    ]);
+  }
 });
 
 const ultimoPesaje = computed(() => almacenPesajes.ultimosPesajes[0]);
