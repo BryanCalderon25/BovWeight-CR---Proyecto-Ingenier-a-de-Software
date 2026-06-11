@@ -43,6 +43,7 @@ class AnimalController extends Controller
             'fecha_nacimiento' => 'nullable|date',
             'genero' => 'required|in:Macho,Hembra',
             'proposito' => 'nullable|string|max:255',
+            'estado' => 'nullable|in:activo,inactivo',
             'peso_actual' => 'nullable|numeric|min:0',
             'notas' => 'nullable|string',
         ]);
@@ -70,7 +71,7 @@ class AnimalController extends Controller
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
-        $animal->load('images', 'weightRecords');
+        $animal->load('images', 'weightRecords', 'farm');
 
         return response()->json([
             'mensaje' => 'Animal obtenido exitosamente',
@@ -94,6 +95,7 @@ class AnimalController extends Controller
             'fecha_nacimiento' => 'nullable|date',
             'genero' => 'sometimes|required|in:Macho,Hembra',
             'proposito' => 'nullable|string|max:255',
+            'estado' => 'sometimes|required|in:activo,inactivo',
             'peso_actual' => 'nullable|numeric|min:0',
             'notas' => 'nullable|string',
         ]);

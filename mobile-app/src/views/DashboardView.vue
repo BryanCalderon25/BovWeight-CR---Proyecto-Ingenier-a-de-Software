@@ -21,6 +21,20 @@
 
     <ion-content :fullscreen="true">
       <div class="dashboard-contenido">
+        <!-- Tarjeta de Bienvenida Prominente -->
+        <div v-if="mensajeBienvenida" class="tarjeta tarjeta--bienvenida animar-aparecer">
+          <div class="tarjeta-bienvenida-cabecera">
+            <span style="font-size: 28px">🎉</span>
+            <div style="flex: 1">
+              <h3 class="tarjeta-bienvenida-titulo">¡Registro Completado!</h3>
+              <p class="tarjeta-bienvenida-texto">
+                Cuenta creada correctamente. Bienvenido a <strong>BovWeight CR</strong>.
+              </p>
+            </div>
+            <button class="tarjeta-bienvenida-cerrar" @click="mensajeBienvenida = ''">✕</button>
+          </div>
+        </div>
+
         <!-- Resumen del Panel -->
         <section class="dashboard-resumen animar-aparecer">
           <h2 class="titulo-seccion">Resumen del Panel</h2>
@@ -129,8 +143,8 @@
 
 <script setup>
 /* Dashboard principal — diseño basado en Stitch */
-import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonButtons, IonButton, IonIcon, IonMenuButton
@@ -141,13 +155,35 @@ import { useAlmacenFincas } from '@/stores/fincas.js';
 import { useAlmacenPesajes } from '@/stores/pesajes.js';
 
 const router = useRouter();
+const route = useRoute();
 const almacenAnimales = useAlmacenAnimales();
 const almacenFincas = useAlmacenFincas();
 const almacenPesajes = useAlmacenPesajes();
+const mensajeBienvenida = ref('');
+
+watch(
+  () => route.query.bienvenido,
+  (nuevoValor) => {
+    if (nuevoValor === 'true') {
+      mensajeBienvenida.value = 'Cuenta creada correctamente. Bienvenido a BovWeight CR.';
+      router.replace({ path: route.path, query: {} });
+      setTimeout(() => {
+        mensajeBienvenida.value = '';
+      }, 5000);
+    }
+  },
+  { immediate: true }
+);
 
 onMounted(async () => {
   await almacenFincas.cargarFincas();
-  // Nota: Podríamos cargar animales de la primera finca por defecto o un resumen global si existiera
+  if (almacenFincas.lista.length > 0) {
+    const defaultFarmId = almacenFincas.lista[0].id;
+    await Promise.all([
+      almacenAnimales.cargarAnimalesPorFinca(defaultFarmId),
+      almacenPesajes.cargarTodosLosPesajes()
+    ]);
+  }
 });
 
 const ultimoPesaje = computed(() => almacenPesajes.ultimosPesajes[0]);
@@ -210,4 +246,46 @@ function irAConfiguracion() { router.push('/app/configuracion'); }
 }
 .actividad-info span { font-size: var(--tamano-xs); color: var(--texto-terciario); }
 .actividad-fecha { font-size: var(--tamano-xs); color: var(--texto-terciario); white-space: nowrap; }
+
+.tarjeta--bienvenida {
+  background: linear-gradient(135deg, var(--primario) 0%, var(--primario-medio) 100%);
+  color: #fff;
+  border: none;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--sombra-md);
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+.tarjeta-bienvenida-cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.tarjeta-bienvenida-titulo {
+  font-family: var(--fuente-display);
+  font-weight: 700;
+  font-size: var(--tamano-lg);
+  color: #fff;
+  margin-bottom: 4px;
+}
+.tarjeta-bienvenida-texto {
+  font-size: var(--tamano-sm);
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+.tarjeta-bienvenida-cerrar {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: auto;
+  transition: color var(--transicion-rapida);
+}
+.tarjeta-bienvenida-cerrar:hover {
+  color: #fff;
+}
 </style>

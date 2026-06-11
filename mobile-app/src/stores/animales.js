@@ -37,6 +37,14 @@ export const useAlmacenAnimales = defineStore('animales', () => {
   });
   const razasDisponibles = computed(() => [...new Set(lista.value.map(a => a.raza).filter(r => r))]);
 
+  const animalesActivos = computed(() => {
+    return lista.value.filter(a => a.estado === 'activo' || !a.estado).length;
+  });
+
+  const animalesInactivos = computed(() => {
+    return lista.value.filter(a => a.estado === 'inactivo').length;
+  });
+
   /* Acciones */
   async function cargarAnimalesPorFinca(fincaId) {
     cargando.value = true;
@@ -115,6 +123,7 @@ export const useAlmacenAnimales = defineStore('animales', () => {
   return {
     lista, cargando, busqueda, filtroRaza, filtroEstado, filtroFinca,
     animalesFiltrados, totalAnimales, pesoPromedio, razasDisponibles,
+    animalesActivos, animalesInactivos,
     cargarAnimalesPorFinca, cargarAnimal, obtenerPorId, agregarAnimal, actualizarAnimal, eliminarAnimal
   };
 });

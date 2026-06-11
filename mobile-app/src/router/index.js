@@ -2,7 +2,7 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 
 /* Importar guardias de navegación */
-import { protegerRuta } from './guardias.js';
+import { protegerRuta, evitarAutenticados } from './guardias.js';
 
 const rutas = [
   {
@@ -22,7 +22,26 @@ const rutas = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/LoginView.vue')
+    component: () => import('@/views/LoginView.vue'),
+    beforeEnter: evitarAutenticados
+  },
+  {
+    path: '/registro',
+    name: 'Registro',
+    component: () => import('@/views/RegisterView.vue'),
+    beforeEnter: evitarAutenticados
+  },
+  {
+    path: '/olvide-contrasena',
+    name: 'OlvideContrasena',
+    component: () => import('@/views/OlvideContrasenaView.vue'),
+    beforeEnter: evitarAutenticados
+  },
+  {
+    path: '/restablecer-contrasena',
+    name: 'RestablecerContrasena',
+    component: () => import('@/views/RestablecerContrasenaView.vue'),
+    beforeEnter: evitarAutenticados
   },
   {
     path: '/invitado/acceso/:token',
