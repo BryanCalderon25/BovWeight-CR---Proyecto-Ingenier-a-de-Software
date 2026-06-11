@@ -73,15 +73,15 @@
     </ion-content>
   </ion-page>
 </template>
-
 <script setup>
-/* Vista de Login con glassmorphism y validaciones */
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+/* Vista de Login con glassmorphism, pre-llenado de invitaciones y redirección por rol */
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { IonPage, IonContent } from '@ionic/vue';
 import { useAlmacenAuth } from '@/stores/auth.js';
 
 const router = useRouter();
+const route = useRoute();
 const almacenAuth = useAlmacenAuth();
 
 const formulario = reactive({ correo: '', contrasena: '' });
@@ -89,6 +89,16 @@ const errores = reactive({ correo: '', contrasena: '' });
 const mostrarContrasena = ref(false);
 const mostrarRecuperacion = ref(false);
 const correoRecuperacion = ref('');
+
+// Pre-llenar credenciales de invitación si vienen por query params
+onMounted(() => {
+  const emailQuery = route.query.email;
+  const tokenQuery = route.query.token;
+  if (emailQuery && tokenQuery) {
+    formulario.correo = emailQuery;
+    formulario.contrasena = tokenQuery;
+  }
+});
 
 function validarFormulario() {
   let esValido = true;
@@ -116,7 +126,14 @@ async function manejarLogin() {
   if (!validarFormulario()) return;
   const resultado = await almacenAuth.iniciarSesion(formulario);
   if (resultado.exito) {
-    router.replace('/app/inicio');
+    // Redirección inteligente por rol
+    if (almacenAuth.usuario?.guest_role === 'veterinario') {
+      router.replace('/app/veterinario');
+    } else if (almacenAuth.rolUsuario === 'invitado') {
+      router.replace(`/app/fincas/${almacenAuth.usuario.invited_farm_id}`);
+    } else {
+      router.replace('/app/inicio');
+    }
   }
 }
 

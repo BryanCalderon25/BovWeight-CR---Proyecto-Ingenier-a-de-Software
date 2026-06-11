@@ -57,25 +57,29 @@ onMounted(async () => {
     return;
   }
 
+  // Limpiar sesión activa previa (ganadero u otro) para evitar conflictos de sesión en el navegador
+  try {
+    await almacenAuth.cerrarSesion();
+  } catch (e) {
+    console.warn('No había sesión previa activa o falló el cierre en el servidor:', e);
+  }
+
   try {
     const respuesta = await api.post(`/invitaciones/resolver/${token}`);
     const datos = respuesta.data.datos;
     
-    // Iniciar sesión del invitado en el store Pinia con invited_farm_id explícito
-    almacenAuth.iniciarSesionInvitado({
-      token: datos.token,
-      usuario: {
-        ...datos.usuario,
-        invited_farm_id: datos.finca_id
-      }
-    });
-
     usuarioNombre.value = datos.usuario.name;
     estado.value = 'exito';
 
-    // Redirigir directamente a la finca invitada después de 1.5 segundos
+    // Redirigir al login con credenciales pre-llenadas en lugar de entrar directo
     setTimeout(() => {
-      router.push(`/app/fincas/${datos.finca_id}`);
+      router.push({
+        path: '/login',
+        query: {
+          email: datos.usuario.email,
+          token: token
+        }
+      });
     }, 1500);
   } catch (err) {
     console.error('Error al resolver invitación:', err);

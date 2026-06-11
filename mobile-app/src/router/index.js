@@ -89,6 +89,37 @@ const rutas = [
     name: 'Configuracion',
     component: () => import('@/views/ConfiguracionView.vue'),
     beforeEnter: protegerRuta
+  },
+  // === MÓDULO VETERINARIO ===
+  {
+    path: '/app/veterinario',
+    name: 'HistorialVeterinario',
+    component: () => import('@/views/HistorialVeterinarioView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/veterinario/finca/:farmId',
+    name: 'VetAnimalesFinca',
+    component: () => import('@/views/VetAnimalesFincaView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/veterinario/animal/:id',
+    name: 'DetalleVeterinario',
+    component: () => import('@/views/DetalleVeterinarioView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/veterinario/animal/:id/nuevo',
+    name: 'NuevaAtencion',
+    component: () => import('@/views/FormularioVeterinarioView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/veterinario/registro/:regId/editar',
+    name: 'EditarAtencion',
+    component: () => import('@/views/FormularioVeterinarioView.vue'),
+    beforeEnter: protegerRuta
   }
 ];
 

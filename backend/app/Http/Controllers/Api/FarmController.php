@@ -52,26 +52,26 @@ class FarmController extends Controller
     /**
      * Mostrar una finca específica.
      */
-    public function show(Request $request, Farm $farm)
+    public function show(Request $request, Farm $finca)
     {
-        if ($farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($farm->id)) {
+        if ((int)$finca->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($finca->id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
-        $farm->load('animals');
+        $finca->load('animals');
 
         return response()->json([
             'mensaje' => 'Finca obtenida exitosamente',
-            'datos' => $farm
+            'datos' => $finca
         ]);
     }
 
     /**
      * Actualizar una finca.
      */
-    public function update(Request $request, Farm $farm)
+    public function update(Request $request, Farm $finca)
     {
-        if ($farm->user_id !== $request->user()->id) {
+        if ((int)$finca->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -82,24 +82,24 @@ class FarmController extends Controller
             'area_hectareas' => 'nullable|numeric|min:0',
         ]);
 
-        $farm->update($request->all());
+        $finca->update($request->all());
 
         return response()->json([
             'mensaje' => 'Finca actualizada exitosamente',
-            'datos' => $farm
+            'datos' => $finca
         ]);
     }
 
     /**
      * Eliminar una finca.
      */
-    public function destroy(Request $request, Farm $farm)
+    public function destroy(Request $request, Farm $finca)
     {
-        if ($farm->user_id !== $request->user()->id) {
+        if ((int)$finca->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
-        $farm->delete();
+        $finca->delete();
 
         return response()->json([
             'mensaje' => 'Finca eliminada exitosamente'
