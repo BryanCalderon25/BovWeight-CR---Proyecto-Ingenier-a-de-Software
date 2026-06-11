@@ -429,7 +429,7 @@ onMounted(async () => {
 .nombre-vet {
   font-weight: 700;
   font-size: var(--tamano-base);
-  color: var(--texto-principal);
+  color: var(--texto-primario);
   display: flex;
   align-items: center;
   gap: 8px;
