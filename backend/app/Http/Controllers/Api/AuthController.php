@@ -37,6 +37,8 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $user->setAttribute('role', 'ganadero');
+
         return response()->json([
             'mensaje' => 'Usuario registrado exitosamente',
             'datos' => $user,
@@ -67,6 +69,8 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $user->setAttribute('role', $user->getRoleNames()->first() ?? 'ganadero');
+
         return response()->json([
             'mensaje' => 'Inicio de sesión exitoso',
             'datos' => $user,
@@ -80,9 +84,12 @@ class AuthController extends Controller
      */
     public function profile(Request $request)
     {
+        $user = $request->user();
+        $user->setAttribute('role', $user->getRoleNames()->first() ?? 'ganadero');
+
         return response()->json([
             'mensaje' => 'Perfil obtenido exitosamente',
-            'datos' => $request->user(),
+            'datos' => $user,
         ]);
     }
 

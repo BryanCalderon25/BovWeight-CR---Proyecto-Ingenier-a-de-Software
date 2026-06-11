@@ -64,9 +64,8 @@
     </ion-content>
   </ion-page>
 </template>
-
 <script setup>
-/* Vista de Login con glassmorphism y validaciones */
+/* Vista de Login con glassmorphism, pre-llenado de invitaciones, redirección por rol y validaciones */
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { IonPage, IonContent } from '@ionic/vue';
@@ -90,6 +89,16 @@ onMounted(() => {
   } else if (route.query.registrado === 'true') {
     mensajeExito.value = 'Cuenta creada correctamente. Inicie sesión para continuar.';
     setTimeout(() => { mensajeExito.value = ''; }, 5000);
+  }
+});
+
+// Pre-llenar credenciales de invitación si vienen por query params
+onMounted(() => {
+  const emailQuery = route.query.email;
+  const tokenQuery = route.query.token;
+  if (emailQuery && tokenQuery) {
+    formulario.correo = emailQuery;
+    formulario.contrasena = tokenQuery;
   }
 });
 
@@ -119,7 +128,14 @@ async function manejarLogin() {
   if (!validarFormulario()) return;
   const resultado = await almacenAuth.iniciarSesion(formulario);
   if (resultado.exito) {
-    router.replace('/app/inicio');
+    // Redirección inteligente por rol
+    if (almacenAuth.usuario?.guest_role === 'veterinario') {
+      router.replace('/app/veterinario');
+    } else if (almacenAuth.rolUsuario === 'invitado') {
+      router.replace(`/app/fincas/${almacenAuth.usuario.invited_farm_id}`);
+    } else {
+      router.replace('/app/inicio');
+    }
   }
 }
 

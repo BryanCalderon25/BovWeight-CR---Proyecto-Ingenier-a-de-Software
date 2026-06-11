@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\WeightRecordController;
 use App\Http\Controllers\Api\MLIntegrationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\FarmInvitationController;
+use App\Http\Controllers\Api\VeterinaryRecordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,4 +58,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Sincronización Offline
     Route::post('/sincronizacion/pesajes', [App\Http\Controllers\Api\OfflineSyncController::class, 'syncWeightRecords']);
+
+    // === MÓDULO VETERINARIO ===
+    // Registros médicos de un animal
+    Route::get('/animales/{animalId}/veterinario',  [VeterinaryRecordController::class, 'index']);
+    Route::post('/animales/{animalId}/veterinario', [VeterinaryRecordController::class, 'store']);
+    Route::put('/veterinario/{id}',                 [VeterinaryRecordController::class, 'update']);
+    Route::delete('/veterinario/{id}',              [VeterinaryRecordController::class, 'destroy']);
+    // Reporte veterinario PDF (mismo endpoint para ambos puntos de entrada — DRY)
+    Route::get('/animales/{animalId}/reporte-veterinario', [ReportController::class, 'generateVeterinaryReport']);
 });

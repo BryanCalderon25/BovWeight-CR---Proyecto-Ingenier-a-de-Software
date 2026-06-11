@@ -16,7 +16,9 @@ class AnimalController extends Controller
     {
         $farm = Farm::findOrFail($farmId);
 
-        if ($farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($farmId)) {
+        \Log::info("AnimalController@index request: user=" . $request->user()->id . ", farmId=" . $farmId . ", farmOwner=" . $farm->user_id);
+
+        if ((int)$farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($farmId)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -47,7 +49,7 @@ class AnimalController extends Controller
 
         $farm = Farm::findOrFail($request->farm_id);
 
-        if ($farm->user_id !== $request->user()->id) {
+        if ((int)$farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -64,7 +66,7 @@ class AnimalController extends Controller
      */
     public function show(Request $request, Animal $animal)
     {
-        if ($animal->farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
+        if ((int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -81,7 +83,7 @@ class AnimalController extends Controller
      */
     public function update(Request $request, Animal $animal)
     {
-        if ($animal->farm->user_id !== $request->user()->id) {
+        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -109,7 +111,7 @@ class AnimalController extends Controller
      */
     public function destroy(Request $request, Animal $animal)
     {
-        if ($animal->farm->user_id !== $request->user()->id) {
+        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

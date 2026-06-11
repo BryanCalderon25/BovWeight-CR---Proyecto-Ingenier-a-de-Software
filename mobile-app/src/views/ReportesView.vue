@@ -30,14 +30,29 @@
           </div>
         </section>
 
-        <!-- Seleccionar finca -->
+        <!-- Seleccionar finca (normal) o animal (veterinario) -->
         <section class="animar-aparecer animar-delay-2">
-          <div class="campo-grupo">
+          <!-- Selector de finca para reportes normales -->
+          <div v-if="tipoSeleccionado !== 'veterinario'" class="campo-grupo">
             <label class="campo-etiqueta">Finca</label>
             <select class="campo-entrada" v-model="fincaSeleccionada">
               <option value="">Todas las fincas</option>
               <option v-for="f in fincas" :key="f.id" :value="f.id">{{ f.nombre }}</option>
             </select>
+          </div>
+          <!-- Selector de animal para reporte veterinario -->
+          <div v-else class="campo-grupo">
+            <label class="campo-etiqueta">Animal *</label>
+            <select id="selector-animal-veterinario" class="campo-entrada" v-model="animalSeleccionado">
+              <option value="">Seleccione un animal...</option>
+              <option v-for="a in animalesList" :key="a.id" :value="a.id">
+                {{ a.arete }}{{ a.nombre ? ' - ' + a.nombre : '' }}
+              </option>
+            </select>
+            <p v-if="tipoSeleccionado === 'veterinario' && !animalSeleccionado"
+               style="font-size:var(--tamano-xs);color:var(--texto-terciario);margin-top:4px">
+              El reporte incluirá información general, pesajes e historial veterinario del animal.
+            </p>
           </div>
         </section>
 
@@ -82,13 +97,19 @@
 
 <script setup>
 /* Vista de Reportes PDF */
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton } from '@ionic/vue';
 import { useAlmacenFincas } from '@/stores/fincas.js';
+import { useAlmacenAnimales } from '@/stores/animales.js';
+import { useAlmacenVeterinario } from '@/stores/veterinario.js';
 import api from '@/services/api';
 
-const almacenFincas = useAlmacenFincas();
-const fincas = almacenFincas.lista;
+const almacenFincas     = useAlmacenFincas();
+const almacenAnimales   = useAlmacenAnimales();
+const almacenVet        = useAlmacenVeterinario();
+const fincas            = almacenFincas.lista;
+const animalesList      = computed(() => almacenAnimales.lista);
+const animalSeleccionado = ref('');
 
 const tipoSeleccionado = ref('general');
 const fincaSeleccionada = ref('');
@@ -98,9 +119,10 @@ const blobReporte = ref(null);
 const nombreArchivoReporte = ref('');
 
 const tiposReporte = [
-  { id: 'general', icono: '📊', nombre: 'General', descripcion: 'Resumen completo del hato' },
-  { id: 'pesajes', icono: '⚖️', nombre: 'Pesajes', descripcion: 'Historial de pesajes' },
-  { id: 'finca', icono: '🏡', nombre: 'Por Finca', descripcion: 'Detalle por finca' }
+  { id: 'general',     icono: '📊', nombre: 'General',     descripcion: 'Resumen completo del hato' },
+  { id: 'pesajes',     icono: '⚖️', nombre: 'Pesajes',     descripcion: 'Historial de pesajes' },
+  { id: 'finca',       icono: '🏡', nombre: 'Por Finca',   descripcion: 'Detalle por finca' },
+  { id: 'veterinario', icono: '🩺', nombre: 'Veterinario', descripcion: 'Historial médico por animal' },
 ];
 
 const reportesAnteriores = ref([
@@ -113,29 +135,45 @@ async function generarReporte() {
   generando.value = true;
   reporteGenerado.value = false;
   blobReporte.value = null;
-  
+
   try {
-    const params = {
-      tipo: tipoSeleccionado.value,
-      finca_id: fincaSeleccionada.value || undefined
-    };
-    
-    const respuesta = await api.get('/reportes/generar', {
-      params,
-      responseType: 'blob'
-    });
-    
-    blobReporte.value = respuesta.data;
-    nombreArchivoReporte.value = `reporte_${tipoSeleccionado.value}_${new Date().toISOString().split('T')[0]}.pdf`;
+    let blob, nombreArchivo;
+
+    // ── Reporte Veterinario: usa el store del módulo veterinario (DRY) ──
+    if (tipoSeleccionado.value === 'veterinario') {
+      if (!animalSeleccionado.value) {
+        alert('Por favor seleccione un animal para generar el Reporte Veterinario.');
+        return;
+      }
+      const resultado = await almacenVet.generarReportePDF(animalSeleccionado.value);
+      if (!resultado.exito) {
+        alert(resultado.error);
+        return;
+      }
+      blob = resultado.blob;
+      const animal = animalesList.value.find(a => a.id === Number(animalSeleccionado.value));
+      nombreArchivo = `reporte_veterinario_${animal?.arete || animalSeleccionado.value}_${new Date().toISOString().split('T')[0]}.pdf`;
+    } else {
+      // ── Reportes normales ──
+      const params = {
+        tipo:     tipoSeleccionado.value,
+        finca_id: fincaSeleccionada.value || undefined
+      };
+      const respuesta = await api.get('/reportes/generar', { params, responseType: 'blob' });
+      blob = respuesta.data;
+      nombreArchivo = `reporte_${tipoSeleccionado.value}_${new Date().toISOString().split('T')[0]}.pdf`;
+    }
+
+    blobReporte.value     = blob;
+    nombreArchivoReporte.value = nombreArchivo;
     reporteGenerado.value = true;
-    
-    // Agregar al historial de la sesión
+
     reportesAnteriores.value.unshift({
-      id: Date.now(),
-      titulo: `Reporte ${tipoSeleccionado.value.toUpperCase()} - ${new Date().toLocaleDateString('es-CR')}`,
-      fecha: new Date().toLocaleDateString('es-CR'),
-      blob: respuesta.data,
-      nombreArchivo: nombreArchivoReporte.value
+      id:           Date.now(),
+      titulo:       `Reporte ${tipoSeleccionado.value.toUpperCase()} - ${new Date().toLocaleDateString('es-CR')}`,
+      fecha:        new Date().toLocaleDateString('es-CR'),
+      blob,
+      nombreArchivo,
     });
   } catch (err) {
     console.error('Error al generar reporte:', err);
@@ -230,7 +268,7 @@ async function compartirCorreo() {
 
 <style scoped>
 .reportes-contenido{padding:0 20px;display:flex;flex-direction:column;gap:20px}
-.reportes-tipos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.reportes-tipos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
 .reporte-tipo{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:16px 8px;background:var(--superficie-tarjeta);border:1.5px solid var(--borde-color);border-radius:var(--borde-radio-md);cursor:pointer;transition:all var(--transicion-normal);font-size:var(--tamano-sm)}
 .reporte-tipo:hover{border-color:var(--primario-suave)}
 .reporte-tipo--activo{border-color:var(--primario);background:var(--primario-ultra-suave)}
