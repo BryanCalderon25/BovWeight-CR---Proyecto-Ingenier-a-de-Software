@@ -227,4 +227,83 @@ class AuthController extends Controller
             'message' => 'Contraseña actualizada correctamente. Ya puede iniciar sesión.'
         ]);
     }
+
+    /**
+     * Actualizar nombre del usuario autenticado.
+     */
+    public function updateProfile(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => 'required|string|min:2|max:255',
+        ], [
+            'name.required' => 'El nombre es requerido.',
+            'name.min'      => 'El nombre debe tener al menos 2 caracteres.',
+            'name.max'      => 'El nombre no puede superar 255 caracteres.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'mensaje' => $validator->errors()->first(),
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $user = $request->user();
+        $user->name = trim($request->name);
+        $user->save();
+
+        return response()->json([
+            'mensaje' => 'Perfil actualizado correctamente.',
+            'datos'   => $user->fresh(),
+        ]);
+    }
+
+    /**
+     * Cambiar contraseña del usuario autenticado.
+     */
+    public function updatePassword(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'password_actual'       => 'required|string',
+            'password'              => [
+                'required',
+                'string',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/'
+            ],
+            'password_confirmation' => 'required|string',
+        ], [
+            'password_actual.required'       => 'Ingrese su contraseña actual.',
+            'password.required'              => 'Ingrese la nueva contraseña.',
+            'password.confirmed'             => 'Las contraseñas no coinciden.',
+            'password.min'                   => 'La contraseña debe tener mínimo 8 caracteres.',
+            'password.regex'                 => 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.',
+            'password_confirmation.required' => 'Confirme la nueva contraseña.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'mensaje' => $validator->errors()->first(),
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $user = $request->user();
+
+        if (!Hash::check($request->password_actual, $user->password)) {
+            return response()->json([
+                'mensaje' => 'La contraseña actual no es correcta.',
+                'message' => 'La contraseña actual no es correcta.',
+            ], 422);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'mensaje' => 'Contraseña actualizada correctamente.',
+            'message' => 'Contraseña actualizada correctamente.',
+        ]);
+    }
 }

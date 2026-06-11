@@ -185,10 +185,54 @@ export const useAlmacenAuth = defineStore('auth', () => {
     }
   }
 
+  async function actualizarPerfil(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.put('/user/profile', { name: datos.name });
+      const usuarioActualizado = respuesta.data.datos;
+      usuario.value = usuarioActualizado;
+      localStorage.setItem('bw_usuario', JSON.stringify(usuarioActualizado));
+      return { exito: true, mensaje: respuesta.data?.mensaje || 'Perfil actualizado correctamente.' };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al actualizar el perfil.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function cambiarPassword(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.put('/user/password', {
+        password_actual: datos.passwordActual,
+        password: datos.passwordNuevo,
+        password_confirmation: datos.passwordConfirmacion
+      });
+      return { exito: true, mensaje: respuesta.data?.mensaje || 'Contraseña actualizada correctamente.' };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al cambiar la contraseña.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
   return {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
     iniciarSesion, registrarse, cerrarSesion, obtenerPerfil, iniciarSesionInvitado,
-    solicitarRecuperacionPassword, restablecerPassword
+    solicitarRecuperacionPassword, restablecerPassword,
+    actualizarPerfil, cambiarPassword
   };
 });

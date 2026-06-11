@@ -26,6 +26,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Perfil y Sesión
     Route::get('/perfil', [AuthController::class, 'profile']);
     Route::get('/user/profile', [AuthController::class, 'profile']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/user/password', [AuthController::class, 'updatePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Fincas (Farms)
