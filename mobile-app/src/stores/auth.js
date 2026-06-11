@@ -45,7 +45,54 @@ export const useAlmacenAuth = defineStore('auth', () => {
       
       return { exito: true };
     } catch (err) {
-      error.value = err.response?.data?.mensaje || 'Credenciales incorrectas. Intente nuevamente.';
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor';
+      } else if (err.response.status === 401 || err.response.status === 404) {
+        error.value = 'Credenciales incorrectas';
+      } else {
+        error.value = err.response?.data?.mensaje || 'Error al iniciar sesión';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function registrarse(datosRegistro) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.post('/registro', {
+        name: datosRegistro.nombre,
+        email: datosRegistro.correo,
+        password: datosRegistro.contrasena,
+        password_confirmation: datosRegistro.confirmarContrasena
+      });
+
+      const { datos, token_acceso } = respuesta.data;
+
+      if (token_acceso && datos) {
+        usuario.value = datos;
+        token.value = token_acceso;
+        localStorage.setItem('bw_usuario', JSON.stringify(datos));
+        localStorage.setItem('bw_token', token_acceso);
+        return { exito: true, autologin: true };
+      } else {
+        return { exito: true, autologin: false, mensaje: respuesta.data?.mensaje || 'Usuario registrado exitosamente' };
+      }
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor';
+      } else if (err.response.status === 422) {
+        const validationErrors = err.response.data?.errors;
+        if (validationErrors) {
+          error.value = Object.values(validationErrors).flat().join(' ');
+        } else {
+          error.value = err.response.data?.mensaje || 'Datos de registro inválidos';
+        }
+      } else {
+        error.value = err.response?.data?.mensaje || 'Error en el registro';
+      }
       return { exito: false, error: error.value };
     } finally {
       cargando.value = false;
@@ -61,15 +108,25 @@ export const useAlmacenAuth = defineStore('auth', () => {
   }
 
   async function cerrarSesion() {
-    try {
-      await api.post('/logout');
-    } catch (err) {
-      console.error('Error al cerrar sesión en el servidor', err);
-    } finally {
-      usuario.value = null;
-      token.value = '';
-      localStorage.removeItem('bw_usuario');
-      localStorage.removeItem('bw_token');
+    const tokenActual = token.value;
+
+    usuario.value = null;
+    token.value = '';
+    localStorage.removeItem('bw_usuario');
+    localStorage.removeItem('bw_token');
+    sessionStorage.removeItem('bw_usuario');
+    sessionStorage.removeItem('bw_token');
+
+    if (tokenActual) {
+      try {
+        await api.post('/logout', {}, {
+          headers: {
+            Authorization: `Bearer ${tokenActual}`
+          }
+        });
+      } catch (err) {
+        console.error('Error al cerrar sesión en el servidor', err);
+      }
     }
   }
 
@@ -83,12 +140,89 @@ export const useAlmacenAuth = defineStore('auth', () => {
     }
   }
 
-  async function recuperarContrasena(correo) {
+  async function solicitarRecuperacionPassword(email) {
     cargando.value = true;
+    error.value = '';
     try {
-      // Nota: Implementar endpoint en Laravel si es necesario
-      await new Promise(r => setTimeout(r, 1000));
-      return { exito: true, mensaje: 'Se envió un enlace de recuperación a su correo.' };
+      const respuesta = await api.post('/forgot-password', { email });
+      return { exito: true, mensaje: respuesta.data?.mensaje || respuesta.data?.message };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al solicitar la recuperación.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function restablecerPassword(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.post('/reset-password', {
+        email: datos.email,
+        token: datos.token,
+        password: datos.password,
+        password_confirmation: datos.password_confirmation
+      });
+      return { exito: true, mensaje: respuesta.data?.mensaje || respuesta.data?.message };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else if (err.response.status === 422) {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.';
+      } else if (err.response.status === 400) {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'El enlace venció o no es válido.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al restablecer la contraseña.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function actualizarPerfil(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.put('/user/profile', { name: datos.name });
+      const usuarioActualizado = respuesta.data.datos;
+      usuario.value = usuarioActualizado;
+      localStorage.setItem('bw_usuario', JSON.stringify(usuarioActualizado));
+      return { exito: true, mensaje: respuesta.data?.mensaje || 'Perfil actualizado correctamente.' };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al actualizar el perfil.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  async function cambiarPassword(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.put('/user/password', {
+        password_actual: datos.passwordActual,
+        password: datos.passwordNuevo,
+        password_confirmation: datos.passwordConfirmacion
+      });
+      return { exito: true, mensaje: respuesta.data?.mensaje || 'Contraseña actualizada correctamente.' };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al cambiar la contraseña.';
+      }
+      return { exito: false, error: error.value };
     } finally {
       cargando.value = false;
     }
@@ -97,6 +231,8 @@ export const useAlmacenAuth = defineStore('auth', () => {
   return {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
-    iniciarSesion, cerrarSesion, obtenerPerfil, recuperarContrasena, iniciarSesionInvitado
+    iniciarSesion, registrarse, cerrarSesion, obtenerPerfil, iniciarSesionInvitado,
+    solicitarRecuperacionPassword, restablecerPassword,
+    actualizarPerfil, cambiarPassword
   };
 });

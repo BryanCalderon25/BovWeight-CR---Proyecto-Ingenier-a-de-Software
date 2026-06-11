@@ -19,11 +19,16 @@ use App\Http\Controllers\Api\VeterinaryRecordController;
 
 Route::post('/registro', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/invitaciones/resolver/{token}', [FarmInvitationController::class, 'resolveGuestAccess']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Perfil y Sesión
     Route::get('/perfil', [AuthController::class, 'profile']);
+    Route::get('/user/profile', [AuthController::class, 'profile']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/user/password', [AuthController::class, 'updatePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Fincas (Farms)
