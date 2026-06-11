@@ -45,7 +45,7 @@
           <div class="filtro-contenedor">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div class="campo-grupo" style="margin-bottom:0">
-                <label class="campo-etiqueta" style="font-size:10px">Filtrar por Estado</label>
+                <label class="campo-etiqueta">Filtrar por Estado</label>
                 <select class="filtro-select-finca" v-model="filtroEstado">
                   <option value="">Todos los estados</option>
                   <option value="activo">Activo</option>
@@ -53,7 +53,7 @@
                 </select>
               </div>
               <div class="campo-grupo" style="margin-bottom:0">
-                <label class="campo-etiqueta" style="font-size:10px">Filtrar por Raza</label>
+                <label class="campo-etiqueta">Filtrar por Raza</label>
                 <select class="filtro-select-finca" v-model="filtroRaza">
                   <option value="">Todas las razas</option>
                   <option v-for="r in razasParaFiltrar" :key="r" :value="r">{{ r }}</option>
@@ -62,7 +62,7 @@
             </div>
             <div style="margin-top:8px">
               <div class="campo-grupo" style="margin-bottom:0">
-                <label class="campo-etiqueta" style="font-size:10px">Filtrar por Edad</label>
+                <label class="campo-etiqueta">Filtrar por Edad</label>
                 <select class="filtro-select-finca" v-model="filtroEdad">
                   <option value="">Todas las edades</option>
                   <option value="ternero">Terneros/as (< 1 año)</option>
@@ -347,24 +347,38 @@ async function compartirCorreo() {
 
 <style scoped>
 .filtro-contenedor {
-  background: var(--primario-ultra-suave);
-  padding: 12px;
+  background: var(--acento-ultra-suave);
+  padding: 14px;
   border-radius: var(--borde-radio-md);
   margin-top: 14px;
-  border: 1px solid var(--primario-suave);
+  border: 1.5px solid var(--acento-suave);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+.filtro-contenedor .campo-etiqueta,
+.filtro-contenedor :deep(.campo-etiqueta) {
+  color: var(--acento-oscuro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 9px;
+  margin-bottom: 4px;
+  display: block;
 }
 .filtro-select-finca {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: var(--borde-radio-md);
-  border: 1px solid var(--borde-color);
+  border: 1px solid var(--acento-suave);
   background: var(--superficie-tarjeta);
   font-family: var(--fuente-cuerpo);
   font-size: var(--tamano-xs);
   color: var(--texto-primario);
   outline: none;
+  font-weight: 500;
+  transition: all var(--transicion-rapida);
 }
 .filtro-select-finca:focus {
-  border-color: var(--primario);
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px rgba(127, 79, 36, 0.15);
 }
 </style>
