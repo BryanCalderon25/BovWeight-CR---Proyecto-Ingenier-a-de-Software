@@ -29,16 +29,9 @@
         </div>
         <div class="tarjeta animar-aparecer animar-delay-2">
           <span class="etiqueta-seccion">UBICACIÓN</span>
-          <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;font-size:var(--tamano-sm)">
-            <div>
-              <span class="campo-etiqueta">Dirección</span>
-              <p style="margin:4px 0 0 0;color:var(--texto-secundario)">{{ finca.ubicacion || 'No especificada' }}</p>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div><span class="campo-etiqueta">Provincia</span><br/>{{ finca.provincia || '—' }}</div>
-              <div><span class="campo-etiqueta">Cantón</span><br/>{{ finca.canton || '—' }}</div>
-            </div>
-          </div>
+          <p style="margin-top:8px;font-size:var(--tamano-sm);color:var(--texto-secundario)">
+            {{ finca.ubicacion || 'Dirección no especificada' }}
+          </p>
         </div>
 
         <!-- Listado de Ganado en la Finca -->
@@ -49,32 +42,34 @@
           </p>
 
           <!-- Filtros de Ganado -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
-            <div class="campo-grupo" style="margin-bottom:0">
-              <label class="campo-etiqueta" style="font-size:10px">Filtrar por Estado</label>
-              <select class="filtro-select-finca" v-model="filtroEstado">
-                <option value="">Todos los estados</option>
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
+          <div class="filtro-contenedor">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="campo-grupo" style="margin-bottom:0">
+                <label class="campo-etiqueta" style="font-size:10px">Filtrar por Estado</label>
+                <select class="filtro-select-finca" v-model="filtroEstado">
+                  <option value="">Todos los estados</option>
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </div>
+              <div class="campo-grupo" style="margin-bottom:0">
+                <label class="campo-etiqueta" style="font-size:10px">Filtrar por Raza</label>
+                <select class="filtro-select-finca" v-model="filtroRaza">
+                  <option value="">Todas las razas</option>
+                  <option v-for="r in razasParaFiltrar" :key="r" :value="r">{{ r }}</option>
+                </select>
+              </div>
             </div>
-            <div class="campo-grupo" style="margin-bottom:0">
-              <label class="campo-etiqueta" style="font-size:10px">Filtrar por Raza</label>
-              <select class="filtro-select-finca" v-model="filtroRaza">
-                <option value="">Todas las razas</option>
-                <option v-for="r in razasParaFiltrar" :key="r" :value="r">{{ r }}</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-top:8px">
-            <div class="campo-grupo" style="margin-bottom:0">
-              <label class="campo-etiqueta" style="font-size:10px">Filtrar por Edad</label>
-              <select class="filtro-select-finca" v-model="filtroEdad">
-                <option value="">Todas las edades</option>
-                <option value="ternero">Terneros/as (< 1 año)</option>
-                <option value="novillo">Novillos/as (1 - 2 años)</option>
-                <option value="adulto">Adultos/as (> 2 años)</option>
-              </select>
+            <div style="margin-top:8px">
+              <div class="campo-grupo" style="margin-bottom:0">
+                <label class="campo-etiqueta" style="font-size:10px">Filtrar por Edad</label>
+                <select class="filtro-select-finca" v-model="filtroEdad">
+                  <option value="">Todas las edades</option>
+                  <option value="ternero">Terneros/as (< 1 año)</option>
+                  <option value="novillo">Novillos/as (1 - 2 años)</option>
+                  <option value="adulto">Adultos/as (> 2 años)</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -351,6 +346,13 @@ async function compartirCorreo() {
 </script>
 
 <style scoped>
+.filtro-contenedor {
+  background: var(--primario-ultra-suave);
+  padding: 12px;
+  border-radius: var(--borde-radio-md);
+  margin-top: 14px;
+  border: 1px solid var(--primario-suave);
+}
 .filtro-select-finca {
   width: 100%;
   padding: 8px 10px;
@@ -361,5 +363,8 @@ async function compartirCorreo() {
   font-size: var(--tamano-xs);
   color: var(--texto-primario);
   outline: none;
+}
+.filtro-select-finca:focus {
+  border-color: var(--primario);
 }
 </style>
