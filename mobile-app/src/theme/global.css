@@ -24,12 +24,16 @@
   --texto-inverso: #FFFFFF;
   --exito: #4CAF50;
   --exito-suave: #E8F5E9;
+  --exito-texto: #2E7D32;
   --advertencia: #FF9800;
   --advertencia-suave: #FFF3E0;
+  --advertencia-texto: #E65100;
   --peligro: #EF4444;
   --peligro-suave: #FFEBEE;
+  --peligro-texto: #EF4444;
   --info: #2196F3;
   --info-suave: #E3F2FD;
+  --info-texto: #1976D2;
   --sombra-sm: 0 2px 8px rgba(26,29,23,0.06);
   --sombra-md: 0 4px 16px rgba(26,29,23,0.08);
   --sombra-lg: 0 8px 32px rgba(26,29,23,0.12);
@@ -75,10 +79,44 @@
   --superficie-hundida: #0D0F0A;
   --texto-primario: #E8E9DF;
   --texto-secundario: #A4A89A;
-  --texto-terciario: #6B6F63;
-  --borde-color: rgba(232,233,223,0.1);
-  --sombra-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --sombra-md: 0 4px 16px rgba(0,0,0,0.4);
+  --texto-terciario: #8B8E83; /* Mejorado para mejor contraste (gris claro/medio) */
+  --borde-color: rgba(232,233,223,0.12);
+  --sombra-sm: 0 2px 8px rgba(0,0,0,0.35);
+  --sombra-md: 0 4px 16px rgba(0,0,0,0.45);
+
+  /* Corrección de variables de color de marca y fondos de tarjetas métricas para modo oscuro */
+  --primario: #A4AC86;             /* Primario claro para alto contraste */
+  --primario-medio: #BDC4A1;       /* Primario medio claro */
+  --primario-oscuro: #E8E9DF;      /* Texto inverso para botones/insignias */
+  --primario-claro: #C2C5AA;
+  --primario-suave: #455038;       /* Borde verde para tarjetas */
+  --primario-ultra-suave: #242A1D; /* Fondo verde oscuro para tarjetas métricas y avatares */
+
+  --acento: #F2BA8B;               /* Acento claro destacado */
+  --acento-medio: #CFA480;         /* Acento medio claro */
+  --acento-claro: #B6AD90;
+  --acento-suave: #5C4028;         /* Borde café para tarjeta de acento */
+  --acento-ultra-suave: #352316;   /* Fondo café oscuro para tarjeta de acento/filtros */
+  --acento-oscuro: #F9D1B0;        /* Texto destacado de acento */
+
+  /* Estados y Alertas */
+  --exito: #66BB6A;
+  --exito-suave: #162E1A;          /* Verde muy oscuro para fondo */
+  --exito-texto: #81C784;          /* Verde claro para texto */
+  --advertencia: #FFA726;
+  --advertencia-suave: #382414;    /* Café/naranja muy oscuro para fondo */
+  --advertencia-texto: #FFB74D;    /* Naranja claro para texto */
+  --peligro: #EF5350;
+  --peligro-suave: #3C1C1C;        /* Rojo muy oscuro para fondo */
+  --peligro-texto: #E57373;        /* Rojo claro para texto */
+  --info: #42A5F5;
+  --info-suave: #102535;           /* Azul muy oscuro para fondo */
+  --info-texto: #64B5F6;           /* Azul claro para texto */
+
+  /* Ionic */
+  --ion-background-color: var(--superficie);
+  --ion-text-color: var(--texto-primario);
+  --ion-toolbar-background: var(--superficie);
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -99,9 +137,9 @@ body{font-family:var(--fuente-cuerpo);color:var(--texto-primario);background:var
 
 .insignia{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:var(--borde-radio-completo);font-size:var(--tamano-xs);font-weight:600}
 .insignia--primario{background:var(--primario-suave);color:var(--primario-oscuro)}
-.insignia--exito{background:var(--exito-suave);color:#2E7D32}
-.insignia--peligro{background:var(--peligro-suave);color:var(--peligro)}
-.insignia--advertencia{background:var(--advertencia-suave);color:#E65100}
+.insignia--exito{background:var(--exito-suave);color:var(--exito-texto)}
+.insignia--peligro{background:var(--peligro-suave);color:var(--peligro-texto)}
+.insignia--advertencia{background:var(--advertencia-suave);color:var(--advertencia-texto)}
 
 .boton{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border:none;border-radius:var(--borde-radio-md);font-family:var(--fuente-cuerpo);font-size:var(--tamano-base);font-weight:600;cursor:pointer;transition:all var(--transicion-normal);position:relative;overflow:hidden}
 .boton:active{transform:scale(0.97)}

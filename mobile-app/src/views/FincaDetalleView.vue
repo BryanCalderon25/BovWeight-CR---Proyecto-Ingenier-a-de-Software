@@ -84,7 +84,7 @@
               </div>
               <div style="flex:1;display:flex;flex-direction:column;gap:2px">
                 <div style="display:flex;align-items:center;justify-content:space-between">
-                  <strong style="font-size:var(--tamano-sm);color:var(--texto-principal)">{{ animal.nombre || 'Sin nombre' }}</strong>
+                  <strong style="font-size:var(--tamano-sm);color:var(--texto-primario)">{{ animal.nombre || 'Sin nombre' }}</strong>
                   <span style="font-size:var(--tamano-sm);color:var(--primario);font-weight:bold;font-family:var(--fuente-display)">{{ animal.peso_actual || 0 }} kg</span>
                 </div>
                 <span style="font-size:var(--tamano-xs);color:var(--texto-secundario)">{{ animal.arete }} · {{ animal.raza }} · {{ animal.genero }}</span>
@@ -110,7 +110,7 @@
           <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
             <div>
               <label class="campo-etiqueta" style="display:block;margin-bottom:6px">Rol del Invitado</label>
-              <select v-model="rolInvitado" style="width:100%;padding:10px;border-radius:var(--borde-radio-md);border:1px solid var(--borde-color);background:var(--superficie-tarjeta);color:var(--texto-principal)">
+              <select v-model="rolInvitado" style="width:100%;padding:10px;border-radius:var(--borde-radio-md);border:1px solid var(--borde-color);background:var(--superficie-tarjeta);color:var(--texto-primario)">
                 <option value="veterinario">🩺 Veterinario (Cálculo de Dosis/Salud)</option>
                 <option value="comprador">💰 Comprador (Revisión de Pesos/Oferta)</option>
               </select>
@@ -118,7 +118,7 @@
 
             <div>
               <label class="campo-etiqueta" style="display:block;margin-bottom:6px">Duración del Enlace</label>
-              <select v-model="duracionAcceso" style="width:100%;padding:10px;border-radius:var(--borde-radio-md);border:1px solid var(--borde-color);background:var(--superficie-tarjeta);color:var(--texto-principal)">
+              <select v-model="duracionAcceso" style="width:100%;padding:10px;border-radius:var(--borde-radio-md);border:1px solid var(--borde-color);background:var(--superficie-tarjeta);color:var(--texto-primario)">
                 <option value="12">12 horas (Acceso rápido)</option>
                 <option value="24">1 día (24 horas)</option>
                 <option value="48">2 días (48 horas)</option>
