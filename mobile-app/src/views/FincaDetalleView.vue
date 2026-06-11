@@ -68,7 +68,7 @@
         </div>
 
         <!-- Acceso Temporal para Invitados -->
-        <div v-if="almacenAuth.rolUsuario !== 'invitado'" class="tarjeta animar-aparecer animar-delay-4" style="margin-bottom:30px; border: 1.5px dashed var(--primario-suave); background: var(--primario-ultra-suave)">
+        <div v-if="almacenAuth.rolUsuario === 'ganadero' || almacenAuth.rolUsuario === 'admin'" class="tarjeta animar-aparecer animar-delay-4" style="margin-bottom:30px; border: 1.5px dashed var(--primario-suave); background: var(--primario-ultra-suave)">
           <span class="etiqueta-seccion" style="color:var(--primario)">🔑 ACCESO TEMPORAL PARA INVITADOS</span>
           <p style="margin-top:8px;font-size:var(--tamano-sm);color:var(--texto-secundario);line-height:1.4">
             Genere un enlace de acceso temporal para que un veterinario o comprador externo pueda ver el peso de sus animales sin necesidad de una cuenta permanente.

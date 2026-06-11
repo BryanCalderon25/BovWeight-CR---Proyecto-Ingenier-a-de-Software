@@ -24,8 +24,10 @@ class FarmInvitationController extends Controller
 
         $farm = Farm::findOrFail($request->farm_id);
 
-        // Validar que el usuario autenticado sea el dueño de la finca
-        if ($farm->user_id !== $request->user()->id) {
+        \Log::info("Generating invitation: farm_id={$request->farm_id}, farm_user_id={$farm->user_id}, req_user_id={$request->user()->id}, req_user_roles=" . implode(',', $request->user()->getRoleNames()->toArray()));
+
+        // Validar que el usuario autenticado sea el dueño de la finca o administrador
+        if ((int)$farm->user_id !== (int)$request->user()->id && !$request->user()->hasRole('admin')) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -81,21 +83,26 @@ class FarmInvitationController extends Controller
             ['email' => $email],
             [
                 'name' => 'Invitado (' . ucfirst($invitation->role) . ')',
-                'password' => bcrypt(Str::random(24)),
+                'password' => $token,
                 'invited_farm_id' => $invitation->farm_id,
                 'guest_expires_at' => $invitation->expires_at,
             ]
         );
 
-        // Asegurar que el usuario invitado temporal apunte a la finca correcta y mantenga su expiración
+        // Asegurar que el usuario invitado temporal apunte a la finca correcta, mantenga su expiración y actualice su contraseña con el token
         $guest->update([
             'invited_farm_id' => $invitation->farm_id,
             'guest_expires_at' => $invitation->expires_at,
+            'password' => $token,
         ]);
 
         // Asignar rol de Spatie de manera segura
         try {
             $guest->assignRole('invitado');
+            // Si la invitación es de tipo veterinario, asignar también ese rol
+            if ($invitation->role === 'veterinario') {
+                $guest->assignRole('veterinario');
+            }
         } catch (\Exception $e) {
             // Continuar si no está inicializado Spatie en la DB
         }

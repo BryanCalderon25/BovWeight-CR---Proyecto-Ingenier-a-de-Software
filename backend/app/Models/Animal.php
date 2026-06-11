@@ -45,4 +45,12 @@ class Animal extends Model
     {
         return $this->hasMany(WeightRecord::class);
     }
+
+    /**
+     * Obtener el historial veterinario del animal.
+     */
+    public function veterinaryRecords()
+    {
+        return $this->hasMany(VeterinaryRecord::class)->orderBy('fecha_atencion', 'desc');
+    }
 }

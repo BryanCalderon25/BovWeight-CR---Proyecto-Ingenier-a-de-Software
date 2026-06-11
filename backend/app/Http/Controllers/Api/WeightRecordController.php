@@ -42,7 +42,7 @@ class WeightRecordController extends Controller
     {
         $animal = Animal::findOrFail($animalId);
 
-        if ($animal->farm->user_id !== $request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
+        if ((int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -68,7 +68,7 @@ class WeightRecordController extends Controller
 
         $animal = Animal::findOrFail($request->animal_id);
 
-        if ($animal->farm->user_id !== $request->user()->id) {
+        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

@@ -41,19 +41,38 @@ class User extends Authenticatable
         return $this->hasMany(Farm::class);
     }
 
+    protected $appends = ['guest_role'];
+
+    /**
+     * Obtener el rol de invitado dinámicamente.
+     */
+    public function getGuestRoleAttribute()
+    {
+        if ($this->hasRole('veterinario')) {
+            return 'veterinario';
+        }
+        // Retornar comprador si tiene ese rol
+        if ($this->hasRole('comprador')) {
+            return 'comprador';
+        }
+        return null;
+    }
+
     /**
      * Verificar si el usuario tiene acceso compartido (invitado) a una finca.
      */
     public function hasSharedAccess($farmId)
     {
-        if ($this->invited_farm_id !== (int)$farmId) {
-            return false;
+        $result = true;
+        if ((int)$this->invited_farm_id !== (int)$farmId) {
+            $result = false;
         }
 
         if ($this->guest_expires_at && now()->gt($this->guest_expires_at)) {
-            return false;
+            $result = false;
         }
 
-        return true;
+        \Log::info("hasSharedAccess check: user={$this->id}, invited_farm_id=" . ($this->invited_farm_id ?? 'null') . ", farmId={$farmId}, result=" . ($result ? 'true' : 'false'));
+        return $result;
     }
 }

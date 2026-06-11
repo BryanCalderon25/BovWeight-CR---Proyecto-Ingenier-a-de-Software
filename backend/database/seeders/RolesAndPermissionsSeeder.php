@@ -28,7 +28,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'editar animales',
             'eliminar animales',
             'registrar pesaje',
-            'generar reportes'
+            'generar reportes',
+            // Permisos del módulo veterinario
+            'ver historial veterinario',
+            'registrar atencion veterinaria',
+            'generar reporte veterinario',
         ];
 
         foreach ($permisos as $permiso) {
@@ -49,15 +53,30 @@ class RolesAndPermissionsSeeder extends Seeder
             'crear animales',
             'editar animales',
             'registrar pesaje',
-            'generar reportes'
+            'generar reportes',
+            'ver historial veterinario',
+            'generar reporte veterinario',
         ]);
 
         $trabajadorRole = Role::firstOrCreate(['name' => 'trabajador']);
         $trabajadorRole->givePermissionTo([
             'ver fincas',
             'ver animales',
-            'registrar pesaje'
+            'registrar pesaje',
         ]);
+
+        // Rol veterinario (usuario invitado con acceso médico)
+        $veterinarioRole = Role::firstOrCreate(['name' => 'veterinario']);
+        $veterinarioRole->givePermissionTo([
+            'ver fincas',
+            'ver animales',
+            'ver historial veterinario',
+            'registrar atencion veterinaria',
+            'generar reporte veterinario',
+        ]);
+
+        // Rol invitado general
+        Role::firstOrCreate(['name' => 'invitado']);
 
         // Crear usuario administrador por defecto
         $admin = User::firstOrCreate([
