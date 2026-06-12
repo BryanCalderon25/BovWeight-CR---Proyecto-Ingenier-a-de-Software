@@ -258,6 +258,20 @@ function irAConfiguracion() { router.push('/app/configuracion'); }
   margin-top: 12px;
   margin-bottom: 4px;
 }
+[data-tema="oscuro"] .tarjeta--bienvenida {
+  background: linear-gradient(135deg, #333D29 0%, #1E2218 100%);
+  color: #E8E9DF;
+  border: 1px solid rgba(232, 233, 223, 0.12);
+}
+[data-tema="oscuro"] .tarjeta-bienvenida-titulo {
+  color: #E8E9DF;
+}
+[data-tema="oscuro"] .tarjeta-bienvenida-texto {
+  color: #A4A89A;
+}
+[data-tema="oscuro"] .tarjeta-bienvenida-cerrar {
+  color: #A4A89A;
+}
 .tarjeta-bienvenida-cabecera {
   display: flex;
   align-items: flex-start;
