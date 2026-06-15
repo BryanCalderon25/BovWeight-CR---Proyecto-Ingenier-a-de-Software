@@ -11,6 +11,12 @@ services:
     working_dir: /var/www
     volumes:
       - ./backend:/var/www
+
+    environment:
+      - DB_HOST=db
+      - DB_PASSWORD=root
+      - REDIS_HOST=redis
+      - ML_SERVICE_URL=http://ml-service:5000
     depends_on:
       - db
       - redis
