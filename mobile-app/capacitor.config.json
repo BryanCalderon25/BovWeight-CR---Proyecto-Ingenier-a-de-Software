@@ -1,0 +1,8 @@
+{
+  "appId": "com.bovweightcr.app",
+  "appName": "BovWeight CR",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http"
+  }
+}
