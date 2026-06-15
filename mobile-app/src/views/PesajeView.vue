@@ -139,6 +139,8 @@ import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBu
 import { searchOutline } from 'ionicons/icons';
 import { useAlmacenAnimales } from '@/stores/animales.js';
 import { useAlmacenPesajes } from '@/stores/pesajes.js';
+import { Capacitor } from '@capacitor/core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 const almacenAnimales = useAlmacenAnimales();
 const almacenPesajes = useAlmacenPesajes();
@@ -158,11 +160,31 @@ const animalesFiltrados = computed(() => {
   ).slice(0, 5);
 });
 
-function manejarCaptura(tipo) {
+async function manejarCaptura(tipo) {
   if (tipo === 'archivo') {
     inputArchivo.value?.click();
   } else {
-    inputCamara.value?.click();
+    // Si estamos en un dispositivo móvil/nativo, usar la cámara nativa mediante Capacitor
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const foto = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera
+        });
+        imagenCapturada.value = foto.dataUrl;
+      } catch (error) {
+        console.error('Error al capturar imagen con cámara nativa:', error);
+        // Si no se canceló por el usuario, reintentamos con fallback web
+        if (error.message !== 'User cancelled photos app') {
+          inputCamara.value?.click();
+        }
+      }
+    } else {
+      // En navegador web tradicional, abrir el input de cámara HTML5 estándar
+      inputCamara.value?.click();
+    }
   }
 }
 
