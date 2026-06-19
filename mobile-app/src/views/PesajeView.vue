@@ -5,9 +5,7 @@
         <ion-title class="encabezado-titulo">
           <span class="t-bov">Bov</span><span>Weight</span><span class="t-cr">CR</span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button class="boton-icono-encabezado"><ion-icon :icon="searchOutline" /></ion-button>
-        </ion-buttons>
+
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -171,7 +169,7 @@
 /* Vista de Pesaje — diseño basado en Stitch "Nuevo Pesaje Inteligente" */
 import { ref, computed, nextTick } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
-import { searchOutline } from 'ionicons/icons';
+
 import { useAlmacenAnimales } from '@/stores/animales.js';
 import { useAlmacenPesajes } from '@/stores/pesajes.js';
 import { Capacitor } from '@capacitor/core';

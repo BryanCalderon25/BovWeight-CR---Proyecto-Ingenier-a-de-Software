@@ -158,6 +158,27 @@ export const useAlmacenAuth = defineStore('auth', () => {
     }
   }
 
+  async function verificarCodigoRecuperacion(datos) {
+    cargando.value = true;
+    error.value = '';
+    try {
+      const respuesta = await api.post('/verify-reset-code', {
+        email: datos.email,
+        token: datos.token
+      });
+      return { exito: true, mensaje: respuesta.data?.mensaje || respuesta.data?.message };
+    } catch (err) {
+      if (!err.response) {
+        error.value = 'No se pudo conectar con el servidor.';
+      } else {
+        error.value = err.response.data?.mensaje || err.response.data?.message || 'Error al verificar el código.';
+      }
+      return { exito: false, error: error.value };
+    } finally {
+      cargando.value = false;
+    }
+  }
+
   async function restablecerPassword(datos) {
     cargando.value = true;
     error.value = '';
@@ -232,7 +253,7 @@ export const useAlmacenAuth = defineStore('auth', () => {
     usuario, token, cargando, error,
     estaAutenticado, nombreCompleto, rolUsuario,
     iniciarSesion, registrarse, cerrarSesion, obtenerPerfil, iniciarSesionInvitado,
-    solicitarRecuperacionPassword, restablecerPassword,
+    solicitarRecuperacionPassword, verificarCodigoRecuperacion, restablecerPassword,
     actualizarPerfil, cambiarPassword
   };
 });

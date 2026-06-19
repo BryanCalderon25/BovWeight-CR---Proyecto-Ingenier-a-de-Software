@@ -10,14 +10,14 @@ class CorreoRecuperacion extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $enlace;
+    public $codigo;
 
     /**
      * Crear una nueva instancia de mensaje.
      */
-    public function __construct($enlace)
+    public function __construct($codigo)
     {
-        $this->enlace = $enlace;
+        $this->codigo = $codigo;
     }
 
     /**
@@ -25,7 +25,7 @@ class CorreoRecuperacion extends Mailable
      */
     public function build()
     {
-        return $this->subject('Restablecer contraseña - BovWeight CR')
-                    ->html("Recibimos una solicitud para restablecer su contraseña en BovWeight CR. Presione el siguiente enlace para crear una nueva contraseña. Si usted no solicitó este cambio, puede ignorar este correo.<br><br><a href='{$this->enlace}'>{$this->enlace}</a>");
+        return $this->subject('Recuperación de contraseña - BovWeight CR')
+                    ->html("Recibimos una solicitud para restablecer su contraseña en BovWeight CR.<br><br>Su código de recuperación es: <b>{$this->codigo}</b><br><br>Este código expirará en 10 minutos.<br><br>Si usted no solicitó este cambio, ignore este mensaje.");
     }
 }
