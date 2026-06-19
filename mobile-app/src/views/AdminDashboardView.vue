@@ -131,7 +131,14 @@
               </div>
 
               <div class="usr-detalles">
-                <p v-if="usr.invited_farm_id">
+                <p v-if="usr.role === 'veterinario'">
+                  <strong>🏡 Fincas Asignadas:</strong> 
+                  <span v-if="usr.shared_farms && usr.shared_farms.length">
+                    {{ usr.shared_farms.map(f => f.nombre).join(', ') }}
+                  </span>
+                  <span v-else style="color:var(--peligro)">Ninguna finca asignada</span>
+                </p>
+                <p v-else-if="usr.invited_farm_id">
                   <strong>🏡 Finca Asignada:</strong> {{ usr.invited_farm?.nombre || 'Finca ID: ' + usr.invited_farm_id }}
                 </p>
                 <p v-if="usr.guest_expires_at">
@@ -234,8 +241,19 @@
             </select>
           </div>
 
-          <!-- Selector de Finca Asignada (Solo para Veterinario o Invitado) -->
-          <div v-if="requiereFinca" class="campo-grupo">
+          <!-- Selector de Fincas Autorizadas para Veterinarios (Multi-select) -->
+          <div v-if="formUsuario.role === 'veterinario'" class="campo-grupo">
+            <label class="campo-etiqueta">Fincas Autorizadas <span style="color:var(--peligro)">*</span></label>
+            <div class="checkbox-lista">
+              <div v-for="f in listaFincas" :key="f.id" class="checkbox-item">
+                <input type="checkbox" :id="'farm-' + f.id" :value="f.id" v-model="formUsuario.farm_ids" />
+                <label :for="'farm-' + f.id">🏡 {{ f.nombre }}</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector de Finca Asignada (Solo para Invitado) -->
+          <div v-if="formUsuario.role === 'invitado'" class="campo-grupo">
             <label class="campo-etiqueta">Finca Autorizada <span style="color:var(--peligro)">*</span></label>
             <select class="campo-entrada" v-model="formUsuario.invited_farm_id">
               <option :value="null">-- Seleccione una Finca --</option>
@@ -306,7 +324,8 @@ const formUsuario = reactive({
   password: '',
   role: 'invitado',
   invited_farm_id: null,
-  guest_expires_at: ''
+  guest_expires_at: '',
+  farm_ids: []
 });
 
 // Toast state
@@ -414,7 +433,8 @@ function abrirAgregar() {
       password: '',
       role: 'invitado',
       invited_farm_id: null,
-      guest_expires_at: ''
+      guest_expires_at: '',
+      farm_ids: []
     });
     mostrarModalUsuario.value = true;
   }
@@ -497,7 +517,8 @@ function editarUsuario(usr) {
     password: '',
     role: usr.role,
     invited_farm_id: usr.invited_farm_id,
-    guest_expires_at: formattedExpDate
+    guest_expires_at: formattedExpDate,
+    farm_ids: Array.isArray(usr.shared_farms) ? usr.shared_farms.map(f => f.id) : []
   });
   mostrarModalUsuario.value = true;
 }
@@ -516,8 +537,12 @@ async function guardarUsuario() {
     mostrarToast('La contraseña es requerida para nuevos usuarios', 'error');
     return;
   }
-  if (requiereFinca.value && !formUsuario.invited_farm_id) {
-    mostrarToast('Debe asignar una finca autorizada para Veterinarios e Invitados', 'error');
+  if (formUsuario.role === 'invitado' && !formUsuario.invited_farm_id) {
+    mostrarToast('Debe asignar una finca autorizada para el Invitado', 'error');
+    return;
+  }
+  if (formUsuario.role === 'veterinario' && formUsuario.farm_ids.length === 0) {
+    mostrarToast('Debe seleccionar al menos una finca autorizada para el Veterinario', 'error');
     return;
   }
 
@@ -528,6 +553,7 @@ async function guardarUsuario() {
     if (!requiereFinca.value) {
       payload.invited_farm_id = null;
       payload.guest_expires_at = null;
+      payload.farm_ids = [];
     } else if (payload.role !== 'invitado') {
       payload.guest_expires_at = null;
     }
@@ -781,5 +807,33 @@ textarea.campo-entrada {
 
 select.campo-entrada {
   appearance: auto;
+}
+
+.checkbox-lista {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--borde-color);
+  border-radius: var(--borde-radio-md);
+  padding: 12px;
+  background: var(--superficie-hundida);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--tamano-sm);
+}
+.checkbox-item input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+.checkbox-item label {
+  cursor: pointer;
+  user-select: none;
+  color: var(--texto-primario);
 }
 </style>

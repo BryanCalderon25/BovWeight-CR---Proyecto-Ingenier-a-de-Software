@@ -23,6 +23,13 @@ export function protegerRuta(to, from, next) {
     }
   }
 
+  // Bloquear a los administradores de ingresar a las vistas del ganadero
+  const rutasGanadero = ['Inicio', 'Fincas', 'Animales', 'Pesar', 'Historial', 'DetalleFinca', 'DetalleAnimal', 'Reportes'];
+  if (rutasGanadero.includes(to.name) && almacenAuth.rolUsuario === 'admin') {
+    console.warn('Acceso denegado: El administrador no puede ingresar a vistas de ganadero.')
+    return next('/app/admin')
+  }
+
   // Bloquear rutas de escritura veterinaria para no-veterinarios
   const rutasVetEscritura = ['NuevaAtencion', 'EditarAtencion']
   if (rutasVetEscritura.includes(to.name)) {
@@ -37,25 +44,26 @@ export function protegerRuta(to, from, next) {
     }
   }
 
-  // Usuario invitado
+  // Usuario Veterinario (rol directo o rol de invitado)
+  const esVeterinario = almacenAuth.rolUsuario === 'veterinario' || almacenAuth.usuario?.guest_role === 'veterinario';
+  if (esVeterinario) {
+    const rutasVet = ['HistorialVeterinario', 'VetAnimalesFinca', 'DetalleVeterinario', 'NuevaAtencion', 'EditarAtencion'];
+    if (rutasVet.includes(to.name)) {
+      return next();
+    }
+    // Redirigir al home del veterinario
+    return next('/app/veterinario');
+  }
+
+  // Usuario invitado (no veterinario)
   if (almacenAuth.rolUsuario === 'invitado') {
 
     const invitedFarmId = almacenAuth.usuario?.invited_farm_id
-    const guestRole     = almacenAuth.usuario?.guest_role
 
     // 🔥 VALIDACIÓN CRÍTICA
     if (!invitedFarmId) {
       console.error('Invited farm ID no existe')
       return next('/login')
-    }
-
-    // Veterinario: permitir acceso completo al módulo veterinario
-    if (guestRole === 'veterinario') {
-      const rutasVet = ['HistorialVeterinario', 'VetAnimalesFinca', 'DetalleVeterinario', 'NuevaAtencion', 'EditarAtencion']
-      if (rutasVet.includes(to.name)) return next()
-      // Redirigir al home del veterinario
-      if (to.fullPath === '/app/veterinario') return next()
-      return next('/app/veterinario')
     }
 
     // Invitado normal: permitir acceso a su finca
@@ -91,6 +99,13 @@ export function evitarAutenticados(to, from, next) {
   const almacenAuth = useAlmacenAuth()
 
   if (almacenAuth.estaAutenticado) {
+    if (almacenAuth.rolUsuario === 'admin') {
+      return next('/app/admin')
+    } else if (almacenAuth.rolUsuario === 'veterinario' || almacenAuth.usuario?.guest_role === 'veterinario') {
+      return next('/app/veterinario')
+    } else if (almacenAuth.rolUsuario === 'invitado') {
+      return next(`/app/fincas/${almacenAuth.usuario.invited_farm_id}`)
+    }
     return next('/app/inicio')
   }
   return next()

@@ -17,6 +17,8 @@ class FarmController extends Controller
 
         if ($user->hasRole('admin')) {
             $farms = Farm::with('animals')->get();
+        } else if ($user->hasRole('veterinario')) {
+            $farms = $user->sharedFarms()->with('animals')->get();
         } else {
             $isGuest = $user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at));
 
