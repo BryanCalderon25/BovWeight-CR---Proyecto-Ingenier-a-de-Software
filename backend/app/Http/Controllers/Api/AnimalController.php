@@ -22,7 +22,7 @@ class AnimalController extends Controller
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
-        $animals = $farm->animals()->with('images', 'weightRecords')->get();
+        $animals = $farm->animals()->with('images', 'weightRecords', 'veterinaryRecords')->get();
 
         return response()->json([
             'mensaje' => 'Animales obtenidos exitosamente',
