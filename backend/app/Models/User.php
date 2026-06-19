@@ -41,6 +41,14 @@ class User extends Authenticatable
         return $this->hasMany(Farm::class);
     }
 
+    /**
+     * Obtener la finca asignada como invitado/veterinario.
+     */
+    public function invitedFarm()
+    {
+        return $this->belongsTo(Farm::class, 'invited_farm_id');
+    }
+
     protected $appends = ['guest_role'];
 
     /**

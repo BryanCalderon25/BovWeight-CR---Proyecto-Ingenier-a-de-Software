@@ -1,0 +1,39 @@
+# Python (Compilados y entornos virtuales)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+.venv/
+
+# Variables de entorno locales (seguridad)
+.env
+.env.backup
+.env.production
+.env.local
+
+# Dependencias y construcciones de Node (Frontend)
+mobile-app/node_modules/
+mobile-app/dist/
+mobile-app/build/
+mobile-app/.svelte-kit/
+mobile-app/.next/
+
+# IDEs y Editores de código
+.vscode/
+.idea/
+.cursor/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
+Thumbs.db
+
+# Modelos pesados de YOLO descargados
+ml-service/*.pt
+
+# Archivos de logs
+*.log

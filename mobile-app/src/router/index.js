@@ -109,6 +109,12 @@ const rutas = [
     component: () => import('@/views/ConfiguracionView.vue'),
     beforeEnter: protegerRuta
   },
+  {
+    path: '/app/admin',
+    name: 'AdminDashboard',
+    component: () => import('@/views/AdminDashboardView.vue'),
+    beforeEnter: protegerRuta
+  },
   // === MÓDULO VETERINARIO ===
   {
     path: '/app/veterinario',

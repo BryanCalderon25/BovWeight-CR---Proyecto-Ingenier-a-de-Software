@@ -33,7 +33,7 @@ class OfflineSyncController extends Controller
             foreach ($registros as $registroData) {
                 $animal = Animal::find($registroData['animal_id']);
 
-                if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
+                if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
                     $errores[] = [
                         'animal_id' => $registroData['animal_id'],
                         'mensaje' => 'No autorizado para este animal',

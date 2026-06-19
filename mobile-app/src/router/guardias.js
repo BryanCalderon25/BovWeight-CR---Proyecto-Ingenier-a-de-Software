@@ -15,6 +15,14 @@ export function protegerRuta(to, from, next) {
     return next('/login')
   }
 
+  // Proteger rutas de admin
+  if (to.path.startsWith('/app/admin')) {
+    if (almacenAuth.rolUsuario !== 'admin') {
+      console.warn('Acceso denegado a ruta de administración.')
+      return next('/app/inicio')
+    }
+  }
+
   // Bloquear rutas de escritura veterinaria para no-veterinarios
   const rutasVetEscritura = ['NuevaAtencion', 'EditarAtencion']
   if (rutasVetEscritura.includes(to.name)) {
