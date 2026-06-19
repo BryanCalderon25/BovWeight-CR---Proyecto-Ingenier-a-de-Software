@@ -6,7 +6,7 @@
           <span class="t-bov">Bov</span><span>Weight</span><span class="t-cr">CR</span>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button><ion-icon :icon="searchOutline" /></ion-button>
+          <ion-button class="boton-icono-encabezado"><ion-icon :icon="searchOutline" /></ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
