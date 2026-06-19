@@ -123,6 +123,12 @@
           </div>
         </div>
       </div>
+      <!-- Botón Flotante -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed" style="margin-bottom: 20px; margin-right: 10px;">
+        <ion-fab-button @click="mostrarFormulario = true" color="primary">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -131,7 +137,7 @@
 /* Vista de Animales con búsqueda, filtros y CRUD */
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonFab, IonFabButton } from '@ionic/vue';
 import { addOutline, chevronForwardOutline } from 'ionicons/icons';
 import { useAlmacenAnimales } from '@/stores/animales.js';
 import { useAlmacenFincas } from '@/stores/fincas.js';

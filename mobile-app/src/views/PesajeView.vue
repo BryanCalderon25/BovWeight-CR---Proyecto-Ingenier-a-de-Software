@@ -6,7 +6,7 @@
           <span class="t-bov">Bov</span><span>Weight</span><span class="t-cr">CR</span>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button><ion-icon :icon="searchOutline" /></ion-button>
+          <ion-button class="boton-icono-encabezado"><ion-icon :icon="searchOutline" /></ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -35,8 +35,43 @@
             </div>
           </div>
           <!-- Inputs ocultos para captura de archivos y cámara nativa -->
-          <input ref="inputArchivo" type="file" accept="image/*" style="display:none" @change="manejarArchivo" />
-          <input ref="inputCamara" type="file" accept="image/*" capture="environment" style="display:none" @change="manejarArchivo" />
+          
+
+<video
+  v-if="mostrarCamara"
+  ref="videoCamara"
+  autoplay
+  playsinline
+  style="
+    width:100%;
+    border-radius:16px;
+    margin-top:16px;
+    background:black;
+  "
+></video>
+
+<div
+  v-if="mostrarCamara"
+  style="
+    display:flex;
+    gap:12px;
+    margin-top:12px;
+  "
+>
+  <button
+    class="boton boton--primario"
+    @click="capturarFoto"
+  >
+    Capturar foto
+  </button>
+
+  <button
+    class="boton boton--secundario"
+    @click="cerrarCamara"
+  >
+    Cancelar
+  </button>
+</div>
         </section>
 
         <!-- Área de análisis -->
@@ -134,7 +169,7 @@
 
 <script setup>
 /* Vista de Pesaje — diseño basado en Stitch "Nuevo Pesaje Inteligente" */
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
 import { searchOutline } from 'ionicons/icons';
 import { useAlmacenAnimales } from '@/stores/animales.js';
@@ -150,7 +185,11 @@ const busquedaAnimal = ref('');
 const animalSeleccionado = ref(null);
 const resultadoVisible = ref(false);
 const inputArchivo = ref(null);
-const inputCamara = ref(null);
+
+const mostrarCamara = ref(false);
+const videoCamara = ref(null);
+
+let streamCamara = null;
 
 const animalesFiltrados = computed(() => {
   if (!busquedaAnimal.value) return [];
@@ -160,31 +199,11 @@ const animalesFiltrados = computed(() => {
   ).slice(0, 5);
 });
 
-async function manejarCaptura(tipo) {
+function manejarCaptura(tipo) {
   if (tipo === 'archivo') {
     inputArchivo.value?.click();
   } else {
-    // Si estamos en un dispositivo móvil/nativo, usar la cámara nativa mediante Capacitor
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const foto = await Camera.getPhoto({
-          quality: 90,
-          allowEditing: false,
-          resultType: CameraResultType.DataUrl,
-          source: CameraSource.Camera
-        });
-        imagenCapturada.value = foto.dataUrl;
-      } catch (error) {
-        console.error('Error al capturar imagen con cámara nativa:', error);
-        // Si no se canceló por el usuario, reintentamos con fallback web
-        if (error.message !== 'User cancelled photos app') {
-          inputCamara.value?.click();
-        }
-      }
-    } else {
-      // En navegador web tradicional, abrir el input de cámara HTML5 estándar
-      inputCamara.value?.click();
-    }
+    inputCamara.value?.click();
   }
 }
 
@@ -199,6 +218,40 @@ function manejarArchivo(evento) {
 function seleccionarAnimal(animal) {
   animalSeleccionado.value = animal;
   busquedaAnimal.value = '';
+}
+async function capturarFoto() {
+
+  const canvas = document.createElement('canvas');
+
+  canvas.width = videoCamara.value.videoWidth;
+  canvas.height = videoCamara.value.videoHeight;
+
+  const contexto = canvas.getContext('2d');
+
+  contexto.drawImage(
+    videoCamara.value,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  imagenCapturada.value = canvas.toDataURL('image/jpeg');
+
+  cerrarCamara();
+}
+
+function cerrarCamara() {
+
+  if (streamCamara) {
+
+    streamCamara.getTracks().forEach(track => track.stop());
+
+    streamCamara = null;
+
+  }
+
+  mostrarCamara.value = false;
 }
 
 async function ejecutarEstimacion() {
@@ -216,15 +269,21 @@ async function ejecutarEstimacion() {
 }
 
 function nuevoPesaje() {
+
+  cerrarCamara();
+
   imagenCapturada.value = null;
+
   animalSeleccionado.value = null;
+
   resultadoVisible.value = false;
+
   almacenPesajes.resultadoActual = null;
-  
-  // Limpiar el valor del input tipo archivo para permitir seleccionar el mismo archivo consecutivamente
+
   if (inputArchivo.value) {
     inputArchivo.value.value = '';
   }
+
 }
 </script>
 

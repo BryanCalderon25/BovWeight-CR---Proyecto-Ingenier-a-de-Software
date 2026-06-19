@@ -6,11 +6,6 @@
           <ion-back-button default-href="/app/inicio" text="" />
         </ion-buttons>
         <ion-title>Fincas</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="mostrarFormulario = true">
-            <ion-icon :icon="addOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -77,6 +72,12 @@
           </div>
         </div>
       </div>
+      <!-- Botón Flotante -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed" style="margin-bottom: 20px; margin-right: 10px;">
+        <ion-fab-button @click="mostrarFormulario = true" color="primary">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -85,7 +86,7 @@
 /* Vista de Fincas con CRUD completo */
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonBackButton } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonBackButton, IonFab, IonFabButton } from '@ionic/vue';
 import { addOutline } from 'ionicons/icons';
 import { useAlmacenFincas } from '@/stores/fincas.js';
 
