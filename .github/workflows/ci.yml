@@ -19,16 +19,24 @@ jobs:
           php-version: '8.3'
           extensions: sqlite3, pdo_sqlite
 
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --ignore-platform-reqs
-        working-directory: backend
-
       - name: Copy .env
         run: cp .env.example .env
         working-directory: backend
 
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --ignore-platform-reqs
+        working-directory: backend
+
       - name: Generate app key
         run: php artisan key:generate
+        working-directory: backend
+
+      - name: Clear config cache
+        run: php artisan config:clear
+        working-directory: backend
+
+      - name: Run migrations
+        run: php artisan migrate --force
         working-directory: backend
 
       - name: Run tests
