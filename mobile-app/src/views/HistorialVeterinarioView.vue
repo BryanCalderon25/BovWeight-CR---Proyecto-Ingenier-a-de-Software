@@ -1,4 +1,4 @@
-<template>
+|<template>
   <ion-page>
     <ion-header class="ion-no-border">
       <ion-toolbar>
