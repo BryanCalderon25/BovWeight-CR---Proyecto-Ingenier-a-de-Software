@@ -21,7 +21,7 @@ import numpy as np
 from flask import Flask, request, jsonify
 from ultralytics import YOLO
 
-from config import logger, PROPORCIONES_RAZA
+from config import logger, BIOMETRIA_ADULTA
 from vision import (
     extraer_morfologia_de_mascara,
     extraer_morfologia_de_bbox,
@@ -87,7 +87,7 @@ def estimar_peso():
     # ── Extraer metadatos ──
     raza = request.form.get('raza', 'Desconocida')
     genero = request.form.get('genero', 'Hembra')
-    if raza not in PROPORCIONES_RAZA:
+    if raza not in BIOMETRIA_ADULTA:
         raza = 'Desconocida'
     if genero not in ('Macho', 'Hembra'):
         genero = 'Hembra'
@@ -97,6 +97,13 @@ def estimar_peso():
         edad_meses = int(valor_edad) if valor_edad and valor_edad.lower() not in ('null', 'none', '') else None
     except (ValueError, TypeError):
         edad_meses = None
+
+    # Peso actual conocido (del backend) como referencia
+    try:
+        valor_peso = request.form.get('peso_actual')
+        peso_actual_ref = float(valor_peso) if valor_peso and valor_peso.lower() not in ('null', 'none', '') else None
+    except (ValueError, TypeError):
+        peso_actual_ref = None
 
     edad_conocida = edad_meses is not None
 
