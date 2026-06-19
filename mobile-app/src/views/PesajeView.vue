@@ -33,8 +33,13 @@
             </div>
           </div>
           <!-- Inputs ocultos para captura de archivos y cámara nativa -->
-          
-
+          <input
+            ref="inputArchivo"
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change="manejarArchivo"
+          />
 <video
   v-if="mostrarCamara"
   ref="videoCamara"
@@ -197,11 +202,46 @@ const animalesFiltrados = computed(() => {
   ).slice(0, 5);
 });
 
-function manejarCaptura(tipo) {
+async function iniciarCamaraWeb() {
+  mostrarCamara.value = true;
+  await nextTick();
+  try {
+    streamCamara = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' },
+      audio: false
+    });
+    if (videoCamara.value) {
+      videoCamara.value.srcObject = streamCamara;
+    }
+  } catch (error) {
+    console.error('Error al acceder a la cámara web:', error);
+    alert('No se pudo acceder a la cámara web. Asegúrate de dar los permisos correspondientes.');
+    mostrarCamara.value = false;
+  }
+}
+
+async function manejarCaptura(tipo) {
   if (tipo === 'archivo') {
     inputArchivo.value?.click();
   } else {
-    inputCamara.value?.click();
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const foto = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera
+        });
+        imagenCapturada.value = foto.dataUrl;
+      } catch (error) {
+        console.error('Error al capturar imagen con cámara nativa:', error);
+        if (error.message !== 'User cancelled photos app') {
+          await iniciarCamaraWeb();
+        }
+      }
+    } else {
+      await iniciarCamaraWeb();
+    }
   }
 }
 
