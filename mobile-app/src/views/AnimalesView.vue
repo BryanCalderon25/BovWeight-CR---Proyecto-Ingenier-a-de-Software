@@ -6,11 +6,7 @@
           <span class="encabezado-titulo__bov">Bov</span><span>Weight</span>
           <span class="encabezado-titulo__cr">CR</span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="abrirFormulario">
-            <ion-icon :icon="addOutline" />
-          </ion-button>
-        </ion-buttons>
+
       </ion-toolbar>
     </ion-header>
 
@@ -125,7 +121,7 @@
       </div>
       <!-- Botón Flotante -->
       <ion-fab vertical="bottom" horizontal="end" slot="fixed" style="margin-bottom: 20px; margin-right: 10px;">
-        <ion-fab-button @click="mostrarFormulario = true" color="primary">
+        <ion-fab-button @click="abrirFormulario" color="primary">
           <ion-icon :icon="addOutline" />
         </ion-fab-button>
       </ion-fab>

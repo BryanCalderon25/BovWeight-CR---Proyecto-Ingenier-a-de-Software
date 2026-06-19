@@ -5,9 +5,7 @@
         <ion-title class="encabezado-titulo">
           <span class="t-bov">Bov</span><span>Weight</span><span class="t-cr">CR</span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button class="boton-icono-encabezado"><ion-icon :icon="searchOutline" /></ion-button>
-        </ion-buttons>
+
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -193,7 +191,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
-import { searchOutline } from 'ionicons/icons';
+
 import { useAlmacenPesajes } from '@/stores/pesajes.js';
 import { useAlmacenFincas } from '@/stores/fincas.js';
 import { useAlmacenAnimales } from '@/stores/animales.js';
