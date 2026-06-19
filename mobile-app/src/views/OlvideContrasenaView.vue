@@ -15,11 +15,18 @@
               <circle cx="35" cy="28" r="2.5" fill="#C2C5AA"/>
             </svg>
           </div>
-          <h1 class="login-titulo">¿Olvidó su contraseña?</h1>
-          <p class="login-subtitulo">Ingrese el correo con el que creó su cuenta. Le enviaremos un enlace para crear una nueva contraseña.</p>
+          
+          <template v-if="paso === 1">
+            <h1 class="login-titulo">¿Olvidó su contraseña?</h1>
+            <p class="login-subtitulo">Ingrese el correo con el que creó su cuenta. Le enviaremos un código de recuperación de 6 dígitos.</p>
+          </template>
+          <template v-else>
+            <h1 class="login-titulo">Verificación</h1>
+            <p class="login-subtitulo">Hemos enviado un código de recuperación a su correo.</p>
+          </template>
         </div>
  
-        <form class="login-formulario vidrio animar-aparecer animar-delay-1" @submit.prevent="manejarEnvio">
+        <form v-if="paso === 1" class="login-formulario vidrio animar-aparecer animar-delay-1" @submit.prevent="manejarEnvio">
           <div class="campo-grupo">
             <label class="campo-etiqueta" for="correo">Correo electrónico</label>
             <input id="correo" type="email" class="campo-entrada" :class="{ 'campo-entrada--error': errorCorreo }"
@@ -30,7 +37,31 @@
           <button type="submit" class="boton boton--primario boton--completo boton--grande"
             :disabled="almacenAuth.cargando">
             <span v-if="almacenAuth.cargando" class="cargando-spinner" style="width:20px;height:20px;border-width:2px"></span>
-            <span v-else>Enviar enlace de recuperación</span>
+            <span v-else>Enviar código</span>
+          </button>
+ 
+          <p v-if="almacenAuth.error" class="login-error-general">{{ almacenAuth.error }}</p>
+          <p v-if="mensajeExito" class="login-exito-general">{{ mensajeExito }}</p>
+        </form>
+
+        <form v-else class="login-formulario vidrio animar-aparecer animar-delay-1" @submit.prevent="verificarCodigo">
+          <div class="campo-grupo">
+            <label class="campo-etiqueta" for="codigo">Código de 6 dígitos</label>
+            <input id="codigo" type="text" class="campo-entrada" :class="{ 'campo-entrada--error': errorCodigo }"
+              v-model="codigo" placeholder="123456" maxlength="6" autocomplete="off" />
+            <span v-if="errorCodigo" class="campo-error">{{ errorCodigo }}</span>
+          </div>
+ 
+          <button type="submit" class="boton boton--primario boton--completo boton--grande"
+            :disabled="almacenAuth.cargando">
+            <span v-if="almacenAuth.cargando" class="cargando-spinner" style="width:20px;height:20px;border-width:2px"></span>
+            <span v-else>Verificar código</span>
+          </button>
+
+          <button type="button" class="boton boton--secundario boton--completo" style="margin-top: 10px;"
+            :disabled="almacenAuth.cargando" @click="reenviarCodigo">
+            <span v-if="almacenAuth.cargando" class="cargando-spinner" style="width:20px;height:20px;border-width:2px"></span>
+            <span v-else>Reenviar código</span>
           </button>
  
           <p v-if="almacenAuth.error" class="login-error-general">{{ almacenAuth.error }}</p>
@@ -38,7 +69,7 @@
         </form>
  
         <p class="login-registro animar-aparecer animar-delay-2">
-          <a href="#" @click.prevent="router.push('/login')">Volver al inicio de sesión</a>
+          <a href="#" @click.prevent="volverAtras">{{ paso === 1 ? 'Volver al inicio de sesión' : 'Usar otro correo' }}</a>
         </p>
       </div>
     </ion-content>
@@ -54,14 +85,18 @@ import { useAlmacenAuth } from '@/stores/auth.js';
 const router = useRouter();
 const almacenAuth = useAlmacenAuth();
  
+const paso = ref(1);
 const correo = ref('');
+const codigo = ref('');
 const errorCorreo = ref('');
+const errorCodigo = ref('');
 const mensajeExito = ref('');
  
-function validarFormulario() {
+function validarPaso1() {
   let esValido = true;
   errorCorreo.value = '';
   mensajeExito.value = '';
+  almacenAuth.error = '';
  
   if (!correo.value) {
     errorCorreo.value = 'Ingrese su correo electrónico.';
@@ -72,14 +107,67 @@ function validarFormulario() {
   }
   return esValido;
 }
+
+function validarPaso2() {
+  let esValido = true;
+  errorCodigo.value = '';
+  mensajeExito.value = '';
+  almacenAuth.error = '';
+ 
+  if (!codigo.value) {
+    errorCodigo.value = 'Ingrese el código.';
+    esValido = false;
+  } else if (!/^\d{6}$/.test(codigo.value)) {
+    errorCodigo.value = 'El código debe tener exactamente 6 dígitos.';
+    esValido = false;
+  }
+  return esValido;
+}
  
 async function manejarEnvio() {
-  if (!validarFormulario()) return;
+  if (!validarPaso1()) return;
  
   const resultado = await almacenAuth.solicitarRecuperacionPassword(correo.value);
   if (resultado.exito) {
     mensajeExito.value = resultado.mensaje;
-    correo.value = '';
+    paso.value = 2; // Avanzar a pantalla de verificación
+  }
+}
+
+async function reenviarCodigo() {
+  if (!validarPaso1()) return;
+  const resultado = await almacenAuth.solicitarRecuperacionPassword(correo.value);
+  if (resultado.exito) {
+    mensajeExito.value = 'Nuevo código enviado exitosamente.';
+    codigo.value = '';
+  }
+}
+
+async function verificarCodigo() {
+  if (!validarPaso2()) return;
+ 
+  const resultado = await almacenAuth.verificarCodigoRecuperacion({
+    email: correo.value,
+    token: codigo.value
+  });
+  
+  if (resultado.exito) {
+    // Si es válido, redirigir a Pantalla 3
+    router.push({
+      path: '/restablecer-contrasena',
+      query: { email: correo.value, token: codigo.value }
+    });
+  }
+}
+
+function volverAtras() {
+  if (paso.value === 2) {
+    paso.value = 1;
+    codigo.value = '';
+    mensajeExito.value = '';
+    almacenAuth.error = '';
+  } else {
+    router.push('/login');
   }
 }
 </script>

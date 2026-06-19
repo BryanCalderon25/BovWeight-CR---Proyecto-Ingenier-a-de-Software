@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\UserController;
 Route::post('/registro', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/verify-reset-code', [AuthController::class, 'verifyCode']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/invitaciones/resolver/{token}', [FarmInvitationController::class, 'resolveGuestAccess']);
 
