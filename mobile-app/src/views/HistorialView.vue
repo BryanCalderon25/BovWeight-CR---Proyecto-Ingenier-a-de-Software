@@ -124,8 +124,22 @@
             </p>
           </section>
 
-          <!-- Buscador de animales -->
+          <!-- Filtro de Finca -->
           <div class="vf-buscador">
+            <span>🏡</span>
+            <select
+              id="filtro-finca-vet-ganadero"
+              class="vf-buscador-input"
+              v-model="fincaSeleccionada"
+              style="cursor: pointer;"
+            >
+              <option value="" disabled>Seleccione una finca...</option>
+              <option v-for="f in almacenFincas.lista" :key="f.id" :value="f.id">{{ f.nombre }}</option>
+            </select>
+          </div>
+
+          <!-- Buscador de animales -->
+          <div v-if="fincaSeleccionada && almacenAnimales.lista.length > 0" class="vf-buscador">
             <span>🔍</span>
             <input
               id="busqueda-animal-vet-ganadero"
@@ -142,12 +156,30 @@
             <p style="margin-top:12px;color:var(--texto-terciario)">Cargando animales...</p>
           </div>
 
-          <!-- Sin animales -->
-          <div v-else-if="animalesDelGanadero.length === 0" class="estado-vacio">
-            <span class="estado-vacio__icono">🐄</span>
-            <h3 class="estado-vacio__titulo">Sin animales</h3>
+          <!-- Caso 1: No hay ninguna finca o cargando fincas -->
+          <div v-else-if="almacenFincas.lista.length === 0" class="estado-vacio">
+            <span class="estado-vacio__icono">🏡</span>
+            <h3 class="estado-vacio__titulo">Sin fincas</h3>
             <p class="estado-vacio__descripcion">
-              No se encontraron animales. Asegúrese de registrar animales en sus fincas primero.
+              No se encontraron fincas. Registre una finca primero para ver el historial veterinario.
+            </p>
+          </div>
+
+          <!-- Caso 2: Finca seleccionada pero no tiene animales registrados -->
+          <div v-else-if="fincaSeleccionada && almacenAnimales.lista.length === 0" class="estado-vacio">
+            <span class="estado-vacio__icono">🐄</span>
+            <h3 class="estado-vacio__titulo">Sin animales registrados</h3>
+            <p class="estado-vacio__descripcion">
+              Esta finca aún no tiene animales registrados.
+            </p>
+          </div>
+
+          <!-- Caso 3: Tiene animales, pero ninguno tiene tratamientos médicos/veterinarios -->
+          <div v-else-if="fincaSeleccionada && animalesDelGanadero.length === 0" class="estado-vacio">
+            <span class="estado-vacio__icono">🩺</span>
+            <h3 class="estado-vacio__titulo">Sin tratamientos registrados</h3>
+            <p class="estado-vacio__descripcion">
+              {{ busquedaAnimal ? 'No se encontraron animales con tratamientos que coincidan con la búsqueda.' : 'No hay animales en esta finca con registros o tratamientos veterinarios cargados.' }}
             </p>
           </div>
 
@@ -170,6 +202,11 @@
                 <div class="meta-vet">
                   {{ animal.raza || 'Raza no especificada' }} · {{ animal.genero || 'Bovino' }}
                 </div>
+                <div v-if="animal.veterinary_records && animal.veterinary_records.length" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap">
+                  <span class="insignia insignia--exito" style="font-size:10px">
+                    🩺 {{ animal.veterinary_records.length }} {{ animal.veterinary_records.length === 1 ? 'atención' : 'atenciones' }}
+                  </span>
+                </div>
               </div>
               <div class="accion-vet">
                 <button class="boton boton--primario boton--pequeno" @click.stop="irAlHistorialVet(animal.id)">
@@ -188,7 +225,7 @@
 
 <script setup>
 /* Vista de Historial — Reutilizada para Analítica de Peso y acceso a Historial Veterinario del Ganadero */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/vue';
 
@@ -204,6 +241,7 @@ const almacenAnimales = useAlmacenAnimales();
 const canvasGrafico = ref(null);
 const seccionActiva = ref('peso'); // 'peso' | 'veterinario'
 const busquedaAnimal = ref('');
+const fincaSeleccionada = ref('');
 
 const topAnimales = computed(() => {
   return [...almacenPesajes.lista]
@@ -218,12 +256,17 @@ const topAnimales = computed(() => {
 });
 
 const animalesDelGanadero = computed(() => {
-  if (!busquedaAnimal.value.trim()) return almacenAnimales.lista;
-  const termino = busquedaAnimal.value.toLowerCase();
-  return almacenAnimales.lista.filter(a =>
-    a.arete.toLowerCase().includes(termino) ||
-    (a.nombre && a.nombre.toLowerCase().includes(termino))
-  );
+  // Filtramos solo los animales que tengan al menos una atención veterinaria
+  let filtrados = almacenAnimales.lista.filter(a => a.veterinary_records && a.veterinary_records.length > 0);
+
+  if (busquedaAnimal.value.trim()) {
+    const termino = busquedaAnimal.value.toLowerCase();
+    filtrados = filtrados.filter(a =>
+      a.arete.toLowerCase().includes(termino) ||
+      (a.nombre && a.nombre.toLowerCase().includes(termino))
+    );
+  }
+  return filtrados;
 });
 
 function irAlHistorialVet(animalId) {
@@ -234,11 +277,15 @@ onMounted(async () => {
   // Cargar pesajes reales para el gráfico e historial
   await almacenPesajes.cargarTodosLosPesajes();
 
-  // Cargar fincas y animales reales del ganadero
+  // Cargar fincas reales del ganadero
   try {
     await almacenFincas.cargarFincas();
-    const promesas = almacenFincas.lista.map(f => almacenAnimales.cargarAnimalesPorFinca(f.id));
-    await Promise.all(promesas);
+    if (almacenFincas.lista.length > 0) {
+      if (!fincaSeleccionada.value) {
+        fincaSeleccionada.value = almacenFincas.lista[0].id;
+      }
+      await almacenAnimales.cargarAnimalesPorFinca(fincaSeleccionada.value);
+    }
   } catch (err) {
     console.error('Error al cargar fincas o animales en HistorialView:', err);
   }
@@ -314,6 +361,12 @@ onMounted(async () => {
     const x = margen.izq + (i / (etiquetas.length - 1)) * anchoUtil;
     ctx.fillText(label, x, alto - 8);
   });
+});
+
+watch(fincaSeleccionada, async (nuevoId) => {
+  if (nuevoId) {
+    await almacenAnimales.cargarAnimalesPorFinca(nuevoId);
+  }
 });
 </script>
 
