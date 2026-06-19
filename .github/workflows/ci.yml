@@ -20,7 +20,7 @@ jobs:
           extensions: sqlite3, pdo_sqlite
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --ignore-platform-reqs
         working-directory: backend
 
       - name: Copy .env
