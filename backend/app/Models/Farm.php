@@ -33,4 +33,12 @@ class Farm extends Model
     {
         return $this->hasMany(Animal::class);
     }
+
+    /**
+     * Obtener los usuarios con acceso compartido a esta finca.
+     */
+    public function sharedUsers()
+    {
+        return $this->belongsToMany(User::class, 'farm_user', 'farm_id', 'user_id')->withTimestamps();
+    }
 }

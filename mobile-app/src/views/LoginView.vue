@@ -129,7 +129,9 @@ async function manejarLogin() {
   const resultado = await almacenAuth.iniciarSesion(formulario);
   if (resultado.exito) {
     // Redirección inteligente por rol
-    if (almacenAuth.usuario?.guest_role === 'veterinario') {
+    if (almacenAuth.rolUsuario === 'admin') {
+      router.replace('/app/admin');
+    } else if (almacenAuth.rolUsuario === 'veterinario' || almacenAuth.usuario?.guest_role === 'veterinario') {
       router.replace('/app/veterinario');
     } else if (almacenAuth.rolUsuario === 'invitado') {
       router.replace(`/app/fincas/${almacenAuth.usuario.invited_farm_id}`);
