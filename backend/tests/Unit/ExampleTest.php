@@ -11,6 +11,6 @@ class ExampleTest extends TestCase
      */
     public function test_that_true_is_true(): void
     {
-        $this->assertTrue(true);
+        $this->assertTrue(false, '🛑 ERROR INTENCIONAL: El pipeline detectó código defectuoso antes de llegar a producción.');
     }
 }
