@@ -53,10 +53,6 @@
           <p v-if="almacenAuth.error" class="login-error-general">{{ almacenAuth.error }}</p>
         </form>
 
-        <p class="login-registro animar-aparecer animar-delay-2">
-          ¿No tiene cuenta? <a href="#" @click.prevent="router.push('/registro')">Regístrese aquí</a>
-        </p>
-
         <div v-if="mensajeExito" class="toast toast--exito">
           {{ mensajeExito }}
         </div>

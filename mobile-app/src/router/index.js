@@ -27,9 +27,7 @@ const rutas = [
   },
   {
     path: '/registro',
-    name: 'Registro',
-    component: () => import('@/views/RegisterView.vue'),
-    beforeEnter: evitarAutenticados
+    redirect: '/login'
   },
   {
     path: '/olvide-contrasena',
