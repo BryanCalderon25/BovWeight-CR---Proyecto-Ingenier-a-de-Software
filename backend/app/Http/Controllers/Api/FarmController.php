@@ -15,12 +15,18 @@ class FarmController extends Controller
     {
         $user = $request->user();
 
-        $isGuest = $user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at));
-
-        if ($isGuest) {
-            $farms = Farm::where('id', $user->invited_farm_id)->with('animals')->get();
+        if ($user->hasRole('admin')) {
+            $farms = Farm::with('animals')->get();
+        } else if ($user->hasRole('veterinario')) {
+            $farms = $user->sharedFarms()->with('animals')->get();
         } else {
-            $farms = $user->farms()->with('animals')->get();
+            $isGuest = $user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at));
+
+            if ($isGuest) {
+                $farms = Farm::where('id', $user->invited_farm_id)->with('animals')->get();
+            } else {
+                $farms = $user->farms()->with('animals')->get();
+            }
         }
 
         return response()->json([
@@ -34,14 +40,27 @@ class FarmController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->user()->hasRole('veterinario') || $request->user()->hasRole('invitado')) {
+            return response()->json(['mensaje' => 'No autorizado'], 403);
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:255',
             'ubicacion' => 'nullable|string',
             'descripcion' => 'nullable|string',
             'area_hectareas' => 'nullable|numeric|min:0',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
-        $farm = $request->user()->farms()->create($request->all());
+        $data = $request->all();
+
+        if (!$request->user()->hasRole('admin')) {
+            $data['user_id'] = $request->user()->id;
+        } else if (empty($data['user_id'])) {
+            $data['user_id'] = $request->user()->id;
+        }
+
+        $farm = Farm::create($data);
 
         return response()->json([
             'mensaje' => 'Finca creada exitosamente',
@@ -54,7 +73,7 @@ class FarmController extends Controller
      */
     public function show(Request $request, Farm $finca)
     {
-        if ((int)$finca->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($finca->id)) {
+        if (!$request->user()->hasRole('admin') && (int)$finca->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($finca->id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -71,7 +90,11 @@ class FarmController extends Controller
      */
     public function update(Request $request, Farm $finca)
     {
-        if ((int)$finca->user_id !== (int)$request->user()->id) {
+        if ($request->user()->hasRole('veterinario') || $request->user()->hasRole('invitado')) {
+            return response()->json(['mensaje' => 'No autorizado'], 403);
+        }
+
+        if (!$request->user()->hasRole('admin') && (int)$finca->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -80,9 +103,15 @@ class FarmController extends Controller
             'ubicacion' => 'nullable|string',
             'descripcion' => 'nullable|string',
             'area_hectareas' => 'nullable|numeric|min:0',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
-        $finca->update($request->all());
+        $data = $request->all();
+        if (!$request->user()->hasRole('admin')) {
+            unset($data['user_id']);
+        }
+
+        $finca->update($data);
 
         return response()->json([
             'mensaje' => 'Finca actualizada exitosamente',
@@ -95,7 +124,11 @@ class FarmController extends Controller
      */
     public function destroy(Request $request, Farm $finca)
     {
-        if ((int)$finca->user_id !== (int)$request->user()->id) {
+        if ($request->user()->hasRole('veterinario') || $request->user()->hasRole('invitado')) {
+            return response()->json(['mensaje' => 'No autorizado'], 403);
+        }
+
+        if (!$request->user()->hasRole('admin') && (int)$finca->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

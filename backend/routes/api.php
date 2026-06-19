@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\MLIntegrationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\FarmInvitationController;
 use App\Http\Controllers\Api\VeterinaryRecordController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,4 +68,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/veterinario/{id}',              [VeterinaryRecordController::class, 'destroy']);
     // Reporte veterinario PDF (mismo endpoint para ambos puntos de entrada — DRY)
     Route::get('/animales/{animalId}/reporte-veterinario', [ReportController::class, 'generateVeterinaryReport']);
+
+    // === MÓDULO ADMINISTRATIVO (ADMIN ONLY) ===
+    Route::middleware([\App\Http\Middleware\EnsureUserIsAdmin::class])->group(function () {
+        Route::apiResource('users', UserController::class);
+    });
 });

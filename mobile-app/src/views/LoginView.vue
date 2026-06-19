@@ -53,10 +53,6 @@
           <p v-if="almacenAuth.error" class="login-error-general">{{ almacenAuth.error }}</p>
         </form>
 
-        <p class="login-registro animar-aparecer animar-delay-2">
-          ¿No tiene cuenta? <a href="#" @click.prevent="router.push('/registro')">Regístrese aquí</a>
-        </p>
-
         <div v-if="mensajeExito" class="toast toast--exito">
           {{ mensajeExito }}
         </div>
@@ -129,7 +125,9 @@ async function manejarLogin() {
   const resultado = await almacenAuth.iniciarSesion(formulario);
   if (resultado.exito) {
     // Redirección inteligente por rol
-    if (almacenAuth.usuario?.guest_role === 'veterinario') {
+    if (almacenAuth.rolUsuario === 'admin') {
+      router.replace('/app/admin');
+    } else if (almacenAuth.rolUsuario === 'veterinario' || almacenAuth.usuario?.guest_role === 'veterinario') {
       router.replace('/app/veterinario');
     } else if (almacenAuth.rolUsuario === 'invitado') {
       router.replace(`/app/fincas/${almacenAuth.usuario.invited_farm_id}`);

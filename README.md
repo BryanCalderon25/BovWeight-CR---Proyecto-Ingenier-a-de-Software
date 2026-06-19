@@ -83,6 +83,58 @@ pip install -r requirements.txt
 python app.py
 ```
 
+## 🤖 Ejecución y Despliegue en Android
+
+El frontend móvil está desarrollado con **Ionic 8 + Capacitor**. Sigue estos pasos para compilar y ejecutar la aplicación en Android (emulador o dispositivo físico):
+
+### 1. Requisitos Previos de Android
+- Tener instalado **Android Studio**.
+- Configurar la variable de entorno `ANDROID_HOME` y agregar las herramientas del SDK (`platform-tools`) al PATH de tu sistema.
+
+### 2. Configurar el archivo `.env` del Frontend
+Dado que el dispositivo móvil o emulador requiere comunicarse con el backend (Laravel) levantado en tu máquina local:
+- **Para Emuladores de Android (AVD):**
+  Usa la IP especial `10.0.2.2` que apunta al localhost de la máquina host.
+  En [mobile-app/.env](file:///c:/Users/calde/Desktop/BovWeightCR/mobile-app/.env), configura:
+  ```env
+  VITE_API_URL=http://10.0.2.2:8000/api
+  ```
+- **Para Dispositivos Físicos:**
+  Tu teléfono móvil y tu PC deben estar conectados a la **misma red Wi-Fi**. Configura la IP local de tu PC en [mobile-app/.env](file:///c:/Users/calde/Desktop/BovWeightCR/mobile-app/.env):
+  ```env
+  VITE_API_URL=http://<IP_DE_TU_PC>:8000/api
+  ```
+  *(Puedes obtener la IP de tu PC ejecutando `ipconfig` en la consola de Windows).*
+
+### 3. Compilar y Sincronizar el Proyecto
+Desde la raíz del proyecto, ejecuta:
+
+```bash
+# 1. Acceder al directorio del frontend
+cd mobile-app
+
+# 2. Generar la compilación web de producción
+npm run build
+
+# 3. Sincronizar el build y plugins con el proyecto nativo de Android
+npm run cap:sync
+```
+
+### 4. Abrir y Ejecutar el Proyecto
+- **Opción A: Desde Android Studio (Recomendado)**
+  Abre el proyecto nativo ejecutando:
+  ```bash
+  npm run cap:open:android
+  ```
+  Esto abrirá **Android Studio** cargando la carpeta `mobile-app/android`. Una vez que se complete la sincronización de Gradle, selecciona tu dispositivo o emulador en la barra superior y haz clic en **Run (Play)**.
+
+- **Opción B: Desde la Consola (CLI)**
+  Puedes compilar e iniciar la app directamente ejecutando:
+  ```bash
+  npx cap run android
+  ```
+
+
 ## 🎨 Notas sobre el Diseño Frontend
 
 Se ha implementado **estrictamente** la línea visual proporcionada en las capturas de Stitch:

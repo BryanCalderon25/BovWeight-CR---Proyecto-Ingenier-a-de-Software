@@ -27,9 +27,7 @@ const rutas = [
   },
   {
     path: '/registro',
-    name: 'Registro',
-    component: () => import('@/views/RegisterView.vue'),
-    beforeEnter: evitarAutenticados
+    redirect: '/login'
   },
   {
     path: '/olvide-contrasena',
@@ -109,6 +107,12 @@ const rutas = [
     component: () => import('@/views/ConfiguracionView.vue'),
     beforeEnter: protegerRuta
   },
+  {
+    path: '/app/admin',
+    name: 'AdminDashboard',
+    component: () => import('@/views/AdminDashboardView.vue'),
+    beforeEnter: protegerRuta
+  },
   // === MÓDULO VETERINARIO ===
   {
     path: '/app/veterinario',
@@ -138,6 +142,25 @@ const rutas = [
     path: '/app/veterinario/registro/:regId/editar',
     name: 'EditarAtencion',
     component: () => import('@/views/FormularioVeterinarioView.vue'),
+    beforeEnter: protegerRuta
+  }
+  ,
+  {
+    path: '/app/acerca-de',
+    name: 'AcercaDe',
+    component: () => import('@/views/AcercaDeView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/terminos',
+    name: 'Terminos',
+    component: () => import('@/views/TerminosView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/politica-privacidad',
+    name: 'PoliticaPrivacidad',
+    component: () => import('@/views/PoliticaPrivacidadView.vue'),
     beforeEnter: protegerRuta
   }
 ];

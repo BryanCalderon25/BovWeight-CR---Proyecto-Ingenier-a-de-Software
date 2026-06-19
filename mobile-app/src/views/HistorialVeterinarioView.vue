@@ -1,8 +1,13 @@
-<template>
+|<template>
   <ion-page>
     <ion-header class="ion-no-border">
       <ion-toolbar>
         <ion-title>🩺 Módulo Veterinario</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="cerrarSesion" style="color:var(--peligro)">
+            🚪 Salir
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -123,10 +128,17 @@
 /* Vista principal del Módulo Veterinario — Mis Fincas Asignadas */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton } from '@ionic/vue';
+import { useAlmacenAuth } from '@/stores/auth.js';
 import api from '@/services/api';
 
 const router  = useRouter();
+const almacenAuth = useAlmacenAuth();
+
+async function cerrarSesion() {
+  await almacenAuth.cerrarSesion();
+  router.replace('/login');
+}
 const fincas  = ref([]);
 const cargando = ref(false);
 const busqueda = ref('');

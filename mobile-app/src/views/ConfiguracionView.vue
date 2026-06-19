@@ -185,6 +185,16 @@
           </div>
         </section>
 
+        <!-- ── SECCIÓN: ADMINISTRACIÓN (SOLO ADMIN) ───────── -->
+        <section v-if="almacenAuth.rolUsuario === 'admin'" class="animar-aparecer animar-delay-2">
+          <span class="etiqueta-seccion">ADMINISTRACIÓN</span>
+          <div class="cfg-lista">
+            <div class="cfg-item" @click="irAlDashboardAdmin">
+              <span>🛠️</span><span class="cfg-item-label">Panel de Administración</span><span class="cfg-flecha">›</span>
+            </div>
+          </div>
+        </section>
+
         <!-- ── SECCIÓN: GENERAL ───────────────────────────── -->
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">GENERAL</span>
@@ -209,9 +219,15 @@
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">INFORMACIÓN</span>
           <div class="cfg-lista">
-            <div class="cfg-item"><span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span></div>
+            <div class="cfg-item" @click="irAAcercaDe">
+              <span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span>
+            </div>
+            <div class="cfg-item" @click="irATerminos">
+              <span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span>
+            </div>
+            <div class="cfg-item" @click="irAPoliticaPrivacidad">
+              <span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span>
+            </div>
           </div>
         </section>
 
@@ -439,6 +455,19 @@ function alternarModoOscuro() {
 // ── Navegación ───────────────────────────────────────────
 function irAFincas()   { router.push('/app/fincas'); }
 function irAReportes() { router.push('/app/reportes'); }
+function irAlDashboardAdmin() { router.push('/app/admin'); }
+
+function irAAcercaDe() {
+  router.push('/app/acerca-de');
+}
+
+function irATerminos() {
+  router.push('/app/terminos');
+}
+
+function irAPoliticaPrivacidad() {
+  router.push('/app/politica-privacidad');
+}
 
 async function cerrarSesion() {
   await almacenAuth.cerrarSesion();

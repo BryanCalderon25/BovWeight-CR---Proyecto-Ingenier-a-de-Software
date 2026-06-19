@@ -203,3 +203,19 @@ ion-card{--background:var(--superficie-tarjeta);border-radius:var(--borde-radio-
 .page-enter-active,.page-leave-active{transition:opacity 0.25s ease,transform 0.25s ease}
 .page-enter-from{opacity:0;transform:translateX(20px)}
 .page-leave-to{opacity:0;transform:translateX(-20px)}
+
+/* Botones de acción en encabezado (Mejora visual) */
+.boton-icono-encabezado {
+  --background: var(--superficie-tarjeta);
+  --background-activated: var(--superficie-hundida);
+  --color: var(--primario);
+  --border-radius: 50%;
+  --box-shadow: var(--sombra-sm);
+  width: 42px;
+  height: 42px;
+  margin: 0 4px;
+  transition: all var(--transicion-rapida);
+}
+.boton-icono-encabezado:active {
+  transform: scale(0.92);
+}
