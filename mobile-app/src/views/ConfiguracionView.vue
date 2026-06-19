@@ -208,31 +208,16 @@
         <!-- ── SECCIÓN: INFORMACIÓN ───────────────────────── -->
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">INFORMACIÓN</span>
-<<<<<<< Updated upstream
           <div class="cfg-lista">
-            <div class="cfg-item"><span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span></div>
-=======
-          <div class="config-lista">
-            <div class="config-item" @click="irAAcercaDe">
-  <span>ℹ️</span>
-  <span>Acerca de BovWeight CR</span>
-  <span class="config-flecha">›</span>
-</div>
-
-<div class="config-item" @click="irATerminos">
-  <span>📋</span>
-  <span>Términos y Condiciones</span>
-  <span class="config-flecha">›</span>
-</div>
-
-<div class="config-item" @click="irAPoliticaPrivacidad">
-  <span>🔒</span>
-  <span>Política de Privacidad</span>
-  <span class="config-flecha">›</span>
-</div>
->>>>>>> Stashed changes
+            <div class="cfg-item" @click="irAAcercaDe">
+              <span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span>
+            </div>
+            <div class="cfg-item" @click="irATerminos">
+              <span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span>
+            </div>
+            <div class="cfg-item" @click="irAPoliticaPrivacidad">
+              <span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span>
+            </div>
           </div>
         </section>
 
@@ -461,10 +446,6 @@ function alternarModoOscuro() {
 function irAFincas()   { router.push('/app/fincas'); }
 function irAReportes() { router.push('/app/reportes'); }
 
-<<<<<<< Updated upstream
-async function cerrarSesion() {
-  await almacenAuth.cerrarSesion();
-=======
 function irAAcercaDe() {
   router.push('/app/acerca-de');
 }
@@ -477,9 +458,8 @@ function irAPoliticaPrivacidad() {
   router.push('/app/politica-privacidad');
 }
 
-function cerrarSesion() {
-  almacenAuth.cerrarSesion();
->>>>>>> Stashed changes
+async function cerrarSesion() {
+  await almacenAuth.cerrarSesion();
   router.replace('/login');
 }
 
