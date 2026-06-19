@@ -208,12 +208,6 @@
         <!-- ── SECCIÓN: INFORMACIÓN ───────────────────────── -->
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">INFORMACIÓN</span>
-<<<<<<< Updated upstream
-          <div class="cfg-lista">
-            <div class="cfg-item"><span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span></div>
-=======
           <div class="config-lista">
             <div class="config-item" @click="irAAcercaDe">
   <span>ℹ️</span>
