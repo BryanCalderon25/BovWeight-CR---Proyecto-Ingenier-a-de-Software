@@ -32,7 +32,7 @@ class PruebaAutenticacionTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'message' => 'Si el correo está registrado, recibirá un enlace para restablecer su contraseña.'
+            'message' => 'Si el correo está registrado, recibirá un código para restablecer su contraseña.'
         ]);
 
         $this->assertDatabaseHas('password_reset_tokens', [
@@ -56,7 +56,7 @@ class PruebaAutenticacionTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'message' => 'Si el correo está registrado, recibirá un enlace para restablecer su contraseña.'
+            'message' => 'Si el correo está registrado, recibirá un código para restablecer su contraseña.'
         ]);
 
         $this->assertDatabaseMissing('password_reset_tokens', [
@@ -77,7 +77,7 @@ class PruebaAutenticacionTest extends TestCase
             'password' => Hash::make('OldPassword123!'),
         ]);
 
-        $token = 'safe-random-token-string';
+        $token = '123456';
         DB::table('password_reset_tokens')->insert([
             'email' => 'juan.perez@example.com',
             'token' => Hash::make($token),
@@ -121,20 +121,20 @@ class PruebaAutenticacionTest extends TestCase
 
         DB::table('password_reset_tokens')->insert([
             'email' => 'juan.perez@example.com',
-            'token' => Hash::make('real-token'),
+            'token' => Hash::make('123456'),
             'created_at' => now(),
         ]);
 
         $response = $this->postJson('/api/reset-password', [
             'email' => 'juan.perez@example.com',
-            'token' => 'invalid-token',
+            'token' => '000000',
             'password' => 'NewPassword123!',
             'password_confirmation' => 'NewPassword123!',
         ]);
 
         $response->assertStatus(400);
         $response->assertJson([
-            'message' => 'El enlace venció o no es válido.'
+            'message' => 'El código ingresado no es válido.'
         ]);
     }
 
@@ -149,7 +149,7 @@ class PruebaAutenticacionTest extends TestCase
             'password' => Hash::make('OldPassword123!'),
         ]);
 
-        $token = 'safe-random-token-string';
+        $token = '123456';
         DB::table('password_reset_tokens')->insert([
             'email' => 'juan.perez@example.com',
             'token' => Hash::make($token),

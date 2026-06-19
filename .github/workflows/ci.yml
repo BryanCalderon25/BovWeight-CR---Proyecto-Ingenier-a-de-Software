@@ -1,0 +1,67 @@
+name: CI — BovWeight CR
+
+on:
+  push:
+    branches: [main, development, feature/**]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  backend-tests:
+    name: Backend Tests (PHPUnit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sqlite3, pdo_sqlite
+
+      - name: Copy .env
+        run: cp .env.example .env
+        working-directory: backend
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --ignore-platform-reqs
+        working-directory: backend
+
+      - name: Generate app key
+        run: php artisan key:generate
+        working-directory: backend
+
+      - name: Run tests
+        run: php artisan test
+        working-directory: backend
+
+  mobile-tests:
+    name: Mobile Tests (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        working-directory: mobile-app
+
+      - name: Run tests
+        run: npm test
+        working-directory: mobile-app
+
+  docker-build:
+    name: Docker Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build all services
+        run: docker compose build
