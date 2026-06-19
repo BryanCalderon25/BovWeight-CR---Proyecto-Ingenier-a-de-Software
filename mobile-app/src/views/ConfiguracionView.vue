@@ -185,6 +185,16 @@
           </div>
         </section>
 
+        <!-- ── SECCIÓN: ADMINISTRACIÓN (SOLO ADMIN) ───────── -->
+        <section v-if="almacenAuth.rolUsuario === 'admin'" class="animar-aparecer animar-delay-2">
+          <span class="etiqueta-seccion">ADMINISTRACIÓN</span>
+          <div class="cfg-lista">
+            <div class="cfg-item" @click="irAlDashboardAdmin">
+              <span>🛠️</span><span class="cfg-item-label">Panel de Administración</span><span class="cfg-flecha">›</span>
+            </div>
+          </div>
+        </section>
+
         <!-- ── SECCIÓN: GENERAL ───────────────────────────── -->
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">GENERAL</span>
@@ -208,31 +218,16 @@
         <!-- ── SECCIÓN: INFORMACIÓN ───────────────────────── -->
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">INFORMACIÓN</span>
-<<<<<<< Updated upstream
           <div class="cfg-lista">
-            <div class="cfg-item"><span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span></div>
-            <div class="cfg-item"><span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span></div>
-=======
-          <div class="config-lista">
-            <div class="config-item" @click="irAAcercaDe">
-  <span>ℹ️</span>
-  <span>Acerca de BovWeight CR</span>
-  <span class="config-flecha">›</span>
-</div>
-
-<div class="config-item" @click="irATerminos">
-  <span>📋</span>
-  <span>Términos y Condiciones</span>
-  <span class="config-flecha">›</span>
-</div>
-
-<div class="config-item" @click="irAPoliticaPrivacidad">
-  <span>🔒</span>
-  <span>Política de Privacidad</span>
-  <span class="config-flecha">›</span>
-</div>
->>>>>>> Stashed changes
+            <div class="cfg-item" @click="irAAcercaDe">
+              <span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span>
+            </div>
+            <div class="cfg-item" @click="irATerminos">
+              <span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span>
+            </div>
+            <div class="cfg-item" @click="irAPoliticaPrivacidad">
+              <span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span>
+            </div>
           </div>
         </section>
 
@@ -460,11 +455,8 @@ function alternarModoOscuro() {
 // ── Navegación ───────────────────────────────────────────
 function irAFincas()   { router.push('/app/fincas'); }
 function irAReportes() { router.push('/app/reportes'); }
+function irAlDashboardAdmin() { router.push('/app/admin'); }
 
-<<<<<<< Updated upstream
-async function cerrarSesion() {
-  await almacenAuth.cerrarSesion();
-=======
 function irAAcercaDe() {
   router.push('/app/acerca-de');
 }
@@ -477,9 +469,8 @@ function irAPoliticaPrivacidad() {
   router.push('/app/politica-privacidad');
 }
 
-function cerrarSesion() {
-  almacenAuth.cerrarSesion();
->>>>>>> Stashed changes
+async function cerrarSesion() {
+  await almacenAuth.cerrarSesion();
   router.replace('/login');
 }
 

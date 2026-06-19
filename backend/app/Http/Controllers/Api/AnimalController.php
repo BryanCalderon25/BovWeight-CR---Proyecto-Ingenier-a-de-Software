@@ -18,11 +18,11 @@ class AnimalController extends Controller
 
         \Log::info("AnimalController@index request: user=" . $request->user()->id . ", farmId=" . $farmId . ", farmOwner=" . $farm->user_id);
 
-        if ((int)$farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($farmId)) {
+        if (!$request->user()->hasRole('admin') && (int)$farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($farmId)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
-        $animals = $farm->animals()->with('images', 'weightRecords')->get();
+        $animals = $farm->animals()->with('images', 'weightRecords', 'veterinaryRecords')->get();
 
         return response()->json([
             'mensaje' => 'Animales obtenidos exitosamente',
@@ -50,7 +50,7 @@ class AnimalController extends Controller
 
         $farm = Farm::findOrFail($request->farm_id);
 
-        if ((int)$farm->user_id !== (int)$request->user()->id) {
+        if (!$request->user()->hasRole('admin') && (int)$farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -67,7 +67,7 @@ class AnimalController extends Controller
      */
     public function show(Request $request, Animal $animal)
     {
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -84,7 +84,7 @@ class AnimalController extends Controller
      */
     public function update(Request $request, Animal $animal)
     {
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -113,7 +113,7 @@ class AnimalController extends Controller
      */
     public function destroy(Request $request, Animal $animal)
     {
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

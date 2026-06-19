@@ -100,56 +100,7 @@
           </div>
         </div>
 
-        <!-- Acceso Temporal para Invitados -->
-        <div v-if="almacenAuth.rolUsuario === 'ganadero' || almacenAuth.rolUsuario === 'admin'" class="tarjeta animar-aparecer animar-delay-4" style="margin-bottom:30px; border: 1.5px dashed var(--primario-suave); background: var(--primario-ultra-suave)">
-          <span class="etiqueta-seccion" style="color:var(--primario)">🔑 ACCESO TEMPORAL PARA INVITADOS</span>
-          <p style="margin-top:8px;font-size:var(--tamano-sm);color:var(--texto-secundario);line-height:1.4">
-            Genere un enlace de acceso temporal para que un veterinario o comprador externo pueda ver el peso de sus animales sin necesidad de una cuenta permanente.
-          </p>
-          
-          <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
-            <div>
-              <label class="campo-etiqueta" style="display:block;margin-bottom:6px">Rol del Invitado</label>
-              <select v-model="rolInvitado" style="width:100%;padding:10px;border-radius:var(--borde-radio-md);border:1px solid var(--borde-color);background:var(--superficie-tarjeta);color:var(--texto-primario)">
-                <option value="veterinario">🩺 Veterinario (Cálculo de Dosis/Salud)</option>
-                <option value="comprador">💰 Comprador (Revisión de Pesos/Oferta)</option>
-              </select>
-            </div>
 
-            <div>
-              <label class="campo-etiqueta" style="display:block;margin-bottom:6px">Duración del Enlace</label>
-              <select v-model="duracionAcceso" style="width:100%;padding:10px;border-radius:var(--borde-radio-md);border:1px solid var(--borde-color);background:var(--superficie-tarjeta);color:var(--texto-primario)">
-                <option value="12">12 horas (Acceso rápido)</option>
-                <option value="24">1 día (24 horas)</option>
-                <option value="48">2 días (48 horas)</option>
-                <option value="168">1 semana (168 horas)</option>
-              </select>
-            </div>
-
-            <button class="boton boton--primario boton--completo" style="margin-top:8px" @click="generarEnlaceInvitado" :disabled="generando">
-              {{ generando ? 'Generando Enlace...' : '⚡ Generar Enlace de Invitación' }}
-            </button>
-
-            <!-- Cuadro de resultado del enlace generado -->
-            <div v-if="enlaceGenerado" style="margin-top:12px;padding:12px;background:var(--superficie-tarjeta);border:1px solid var(--borde-color);border-radius:var(--borde-radio-md)">
-              <span class="campo-etiqueta" style="color:var(--exito);font-weight:bold">¡Enlace Creado! (Vence: {{ fechaVencimientoFormatted }}):</span>
-              <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-                <input type="text" readonly :value="enlaceGenerado" style="flex:1;padding:10px;font-size:var(--tamano-xs);border:1px solid var(--borde-color);border-radius:var(--borde-radio-md);background:var(--borde-color);color:var(--texto-secundario)"/>
-                <button class="boton boton--secundario" style="padding:10px" @click="copiarEnlace">📋 Copiar</button>
-              </div>
-
-              <!-- Enviar de forma directa por WhatsApp o Correo -->
-              <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
-                <button class="boton boton--secundario boton--pequeno" @click="compartirWhatsApp">
-                  💬 Enviar por WhatsApp
-                </button>
-                <button class="boton boton--secundario boton--pequeno" @click="compartirCorreo">
-                  📧 Enviar por Correo
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -256,93 +207,7 @@ onMounted(() => {
   }
 });
 
-const rolInvitado = ref('veterinario');
-const duracionAcceso = ref('24');
-const generando = ref(false);
-const enlaceGenerado = ref('');
-const fechaVencimiento = ref('');
 
-const fechaVencimientoFormatted = computed(() => {
-  if (!fechaVencimiento.value) return '';
-  const d = new Date(fechaVencimiento.value);
-  return d.toLocaleString('es-CR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-});
-
-async function generarEnlaceInvitado() {
-  generando.value = true;
-  enlaceGenerado.value = '';
-  try {
-    const respuesta = await api.post('/invitaciones', {
-      farm_id: route.params.id,
-      role: rolInvitado.value,
-      expires_in_hours: parseInt(duracionAcceso.value)
-    });
-    
-    let enlace = respuesta.data.datos.enlace;
-    const origin = window.location.origin;
-    if (enlace.startsWith('http://localhost:8100')) {
-      enlace = enlace.replace('http://localhost:8100', origin);
-    }
-    
-    enlaceGenerado.value = enlace;
-    fechaVencimiento.value = respuesta.data.datos.expires_at;
-  } catch (err) {
-    console.error('Error al generar enlace:', err);
-    const mensajeError = err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo generar el enlace de invitación. Asegúrese de que el servidor esté activo.';
-    alert(mensajeError);
-  } finally {
-    generando.value = false;
-  }
-}
-
-function copiarEnlace() {
-  if (!enlaceGenerado.value) return;
-  navigator.clipboard.writeText(enlaceGenerado.value);
-  alert('¡Enlace de invitación copiado al portapapeles!');
-}
-
-async function compartirWhatsApp() {
-  if (!enlaceGenerado.value) return;
-  
-  const mensaje = `Hola, te comparto mi enlace de acceso temporal como *${rolInvitado.value.toUpperCase()}* para ver el inventario y peso de los animales en la finca *${finca.value.nombre}*:\n\n${enlaceGenerado.value}`;
-  
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: 'Acceso Invitado BovWeight CR',
-        text: mensaje
-      });
-    } catch (e) {
-      if (e.name !== 'AbortError') {
-        window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
-      }
-    }
-  } else {
-    window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
-  }
-}
-
-async function compartirCorreo() {
-  if (!enlaceGenerado.value) return;
-  
-  const subject = `Acceso temporal a la finca ${finca.value.nombre} - BovWeight CR`;
-  const body = `Hola,\n\nTe comparto el enlace de acceso temporal con rol de ${rolInvitado.value.toUpperCase()} para ingresar a mi finca y visualizar la estimación de pesos de los animales:\n\nEnlace de acceso: ${enlaceGenerado.value}\n\nNota: Este enlace vencerá el ${fechaVencimientoFormatted.value}.\n\nGenerado por BovWeight CR.`;
-  
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: subject,
-        text: body
-      });
-    } catch (e) {
-      if (e.name !== 'AbortError') {
-        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-      }
-    }
-  } else {
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-  }
-}
 </script>
 
 <style scoped>

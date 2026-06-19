@@ -115,7 +115,7 @@ function validarFormulario() {
   }
 
   if (!formulario.email || !formulario.token) {
-    almacenAuth.error = 'El enlace venció o no es válido.';
+    almacenAuth.error = 'Falta el código de verificación o el correo.';
     esValido = false;
   }
 

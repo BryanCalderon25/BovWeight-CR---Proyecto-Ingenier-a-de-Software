@@ -27,9 +27,7 @@ const rutas = [
   },
   {
     path: '/registro',
-    name: 'Registro',
-    component: () => import('@/views/RegisterView.vue'),
-    beforeEnter: evitarAutenticados
+    redirect: '/login'
   },
   {
     path: '/olvide-contrasena',
@@ -107,6 +105,12 @@ const rutas = [
     path: '/app/configuracion',
     name: 'Configuracion',
     component: () => import('@/views/ConfiguracionView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/admin',
+    name: 'AdminDashboard',
+    component: () => import('@/views/AdminDashboardView.vue'),
     beforeEnter: protegerRuta
   },
   // === MÓDULO VETERINARIO ===

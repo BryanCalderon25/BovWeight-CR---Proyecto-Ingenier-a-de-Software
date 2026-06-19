@@ -17,7 +17,7 @@ class ReportController extends Controller
     {
         $animal = Animal::with('farm', 'weightRecords')->findOrFail($animalId);
 
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -75,23 +75,30 @@ class ReportController extends Controller
         // ── Nombre de finca ───────────────────────────────────────────────────
         $fincaNombre = 'Todas las fincas';
         if ($fincaId) {
-            $finca = $isGuest
-                ? \App\Models\Farm::findOrFail($fincaId)
-                : \App\Models\Farm::where('id', $fincaId)->where('user_id', $user->id)->firstOrFail();
+            if ($user && $user->hasRole('admin')) {
+                $finca = \App\Models\Farm::findOrFail($fincaId);
+            } else {
+                $finca = $isGuest
+                    ? \App\Models\Farm::findOrFail($fincaId)
+                    : \App\Models\Farm::where('id', $fincaId)->where('user_id', $user->id)->firstOrFail();
+            }
             $fincaNombre = $finca->nombre;
         }
 
         // ── Consulta base de animales ─────────────────────────────────────────
         $queryAnimales = Animal::query();
 
-        if ($isGuest) {
+        if ($user && $user->hasRole('admin')) {
+            if ($fincaId) {
+                $queryAnimales->where('farm_id', $fincaId);
+            }
+        } else if ($isGuest) {
             $queryAnimales->where('farm_id', $user->invited_farm_id);
         } else {
             $queryAnimales->whereHas('farm', fn($q) => $q->where('user_id', $user->id));
-        }
-
-        if ($fincaId && !$isGuest) {
-            $queryAnimales->where('farm_id', $fincaId);
+            if ($fincaId) {
+                $queryAnimales->where('farm_id', $fincaId);
+            }
         }
 
         $animales = $queryAnimales->with('farm', 'weightRecords')->get();
@@ -278,14 +285,17 @@ class ReportController extends Controller
 
             $queryPesajes = \App\Models\WeightRecord::query();
 
-            if ($isGuest) {
+            if ($user && $user->hasRole('admin')) {
+                if ($fincaId) {
+                    $queryPesajes->whereHas('animal', fn($q) => $q->where('farm_id', $fincaId));
+                }
+            } else if ($isGuest) {
                 $queryPesajes->whereHas('animal', fn($q) => $q->where('farm_id', $user->invited_farm_id));
             } else {
                 $queryPesajes->whereHas('animal.farm', fn($q) => $q->where('user_id', $user->id));
-            }
-
-            if ($fincaId && !$isGuest) {
-                $queryPesajes->whereHas('animal', fn($q) => $q->where('farm_id', $fincaId));
+                if ($fincaId) {
+                    $queryPesajes->whereHas('animal', fn($q) => $q->where('farm_id', $fincaId));
+                }
             }
 
             $pesajes = $queryPesajes->with(['animal.farm'])->orderBy('fecha_pesaje', 'desc')->get();
@@ -319,13 +329,17 @@ class ReportController extends Controller
 
             // ── Consulta de animales activos en el contexto de pesajes ────
             $queryAnimalesActivos = Animal::query();
-            if ($isGuest) {
+            if ($user && $user->hasRole('admin')) {
+                if ($fincaId) {
+                    $queryAnimalesActivos->where('farm_id', $fincaId);
+                }
+            } else if ($isGuest) {
                 $queryAnimalesActivos->where('farm_id', $user->invited_farm_id);
             } else {
                 $queryAnimalesActivos->whereHas('farm', fn($q) => $q->where('user_id', $user->id));
-            }
-            if ($fincaId && !$isGuest) {
-                $queryAnimalesActivos->where('farm_id', $fincaId);
+                if ($fincaId) {
+                    $queryAnimalesActivos->where('farm_id', $fincaId);
+                }
             }
             $totalAnimalesActivos = $queryAnimalesActivos->count();
 
@@ -729,7 +743,7 @@ class ReportController extends Controller
 
         $user = $request->user();
 
-        if ((int)$animal->farm->user_id !== (int)$user->id && !$user->hasSharedAccess($animal->farm_id)) {
+        if (!$user->hasRole('admin') && (int)$animal->farm->user_id !== (int)$user->id && !$user->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

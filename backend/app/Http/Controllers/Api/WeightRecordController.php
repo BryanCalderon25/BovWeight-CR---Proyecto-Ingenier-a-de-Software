@@ -15,7 +15,9 @@ class WeightRecordController extends Controller
         
         $query = WeightRecord::query();
 
-        if ($user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at))) {
+        if ($user->hasRole('admin')) {
+            // Admins see all weight records
+        } else if ($user->invited_farm_id && (!$user->guest_expires_at || now()->lt($user->guest_expires_at))) {
             $query->whereHas('animal', function ($q) use ($user) {
                 $q->where('farm_id', $user->invited_farm_id);
             });
@@ -42,7 +44,7 @@ class WeightRecordController extends Controller
     {
         $animal = Animal::findOrFail($animalId);
 
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 
@@ -68,7 +70,7 @@ class WeightRecordController extends Controller
 
         $animal = Animal::findOrFail($request->animal_id);
 
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

@@ -18,7 +18,7 @@ class VeterinaryRecordController extends Controller
         $animal = Animal::with('farm')->findOrFail($animalId);
         $user   = $request->user();
 
-        if ((int)$animal->farm->user_id !== (int)$user->id && !$user->hasSharedAccess($animal->farm_id)) {
+        if (!$user->hasRole('admin') && (int)$animal->farm->user_id !== (int)$user->id && !$user->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

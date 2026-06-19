@@ -23,7 +23,7 @@ class MLIntegrationController extends Controller
 
         $animal = Animal::findOrFail($request->animal_id);
 
-        if ((int)$animal->farm->user_id !== (int)$request->user()->id) {
+        if (!$request->user()->hasRole('admin') && (int)$animal->farm->user_id !== (int)$request->user()->id && !$request->user()->hasSharedAccess($animal->farm_id)) {
             return response()->json(['mensaje' => 'No autorizado'], 403);
         }
 

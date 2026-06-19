@@ -41,6 +41,22 @@ class User extends Authenticatable
         return $this->hasMany(Farm::class);
     }
 
+    /**
+     * Obtener la finca asignada como invitado/veterinario.
+     */
+    public function invitedFarm()
+    {
+        return $this->belongsTo(Farm::class, 'invited_farm_id');
+    }
+
+    /**
+     * Obtener las fincas asignadas al usuario (muchos a muchos, ej. para veterinarios).
+     */
+    public function sharedFarms()
+    {
+        return $this->belongsToMany(Farm::class, 'farm_user', 'user_id', 'farm_id')->withTimestamps();
+    }
+
     protected $appends = ['guest_role'];
 
     /**
@@ -63,16 +79,19 @@ class User extends Authenticatable
      */
     public function hasSharedAccess($farmId)
     {
-        $result = true;
-        if ((int)$this->invited_farm_id !== (int)$farmId) {
-            $result = false;
+        if ((int)$this->invited_farm_id === (int)$farmId) {
+            if ($this->guest_expires_at && now()->gt($this->guest_expires_at)) {
+                return false;
+            }
+            return true;
         }
 
-        if ($this->guest_expires_at && now()->gt($this->guest_expires_at)) {
-            $result = false;
+        if ($this->hasRole('veterinario')) {
+            if ($this->sharedFarms()->where('farm_id', $farmId)->exists()) {
+                return true;
+            }
         }
 
-        \Log::info("hasSharedAccess check: user={$this->id}, invited_farm_id=" . ($this->invited_farm_id ?? 'null') . ", farmId={$farmId}, result=" . ($result ? 'true' : 'false'));
-        return $result;
+        return false;
     }
 }
