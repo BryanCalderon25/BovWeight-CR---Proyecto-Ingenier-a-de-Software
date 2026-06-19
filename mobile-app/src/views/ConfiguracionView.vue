@@ -10,33 +10,37 @@
     <ion-content :fullscreen="true">
       <div class="cfg-contenido">
 
-        <!-- ── TARJETA DE PERFIL ───────────────────────────── -->
+        <!-- ── TARJETA DE PERFIL (ENFOQUE GANADERO) ─────────── -->
         <div class="cfg-perfil animar-aparecer">
-          <!-- Avatar con iniciales y color elegido -->
+          <!-- Avatar simple con las iniciales y color institucional -->
           <div class="cfg-avatar-wrap">
-            <div class="cfg-avatar" :style="{ background: colorAvatar }">
+            <div class="cfg-avatar">
               {{ iniciales }}
-            </div>
-            <!-- Selector de color discreto debajo del avatar -->
-            <div class="cfg-colores">
-              <button
-                v-for="c in coloresDisponibles"
-                :key="c"
-                class="cfg-color-btn"
-                :class="{ 'cfg-color-btn--activo': colorAvatar === c }"
-                :style="{ background: c }"
-                :aria-label="'Color de avatar ' + c"
-                @click="elegirColor(c)"
-              />
             </div>
           </div>
 
+          <!-- Info y Estadísticas Útiles para el Ganadero -->
           <div class="cfg-perfil-info">
             <h2 class="cfg-nombre">{{ almacenAuth.nombreCompleto || 'Usuario' }}</h2>
             <p class="cfg-correo">{{ almacenAuth.usuario?.email || '' }}</p>
-            <div class="cfg-meta-row">
+            <div class="cfg-meta-row" style="margin-bottom: 8px">
               <span class="insignia insignia--primario">{{ almacenAuth.rolUsuario }}</span>
-              <span v-if="fechaCreacion" class="cfg-fecha">Miembro desde {{ fechaCreacion }}</span>
+            </div>
+
+            <!-- Grilla de Estadísticas de Negocio -->
+            <div class="cfg-stats-grid">
+              <div class="cfg-stat-item">
+                <span class="cfg-stat-val">{{ almacenFincas.totalFincas }}</span>
+                <span class="cfg-stat-lbl">Fincas</span>
+              </div>
+              <div class="cfg-stat-item">
+                <span class="cfg-stat-val">{{ animalesActivosHato }}</span>
+                <span class="cfg-stat-lbl">Ganado Activo</span>
+              </div>
+              <div class="cfg-stat-item">
+                <span class="cfg-stat-val">{{ fechaCreacionShort || '...' }}</span>
+                <span class="cfg-stat-lbl">Registro</span>
+              </div>
             </div>
           </div>
         </div>
@@ -44,6 +48,9 @@
         <!-- ── SECCIÓN: MIS DATOS ─────────────────────────── -->
         <section class="animar-aparecer animar-delay-1">
           <span class="etiqueta-seccion">MIS DATOS</span>
+          <p style="font-size:var(--tamano-xs);color:var(--texto-secundario);margin-top:4px;margin-bottom:8px">
+            Aquí puede revisar y actualizar sus datos de cuenta.
+          </p>
           <div class="cfg-lista">
 
             <!-- Ítem: Editar Nombre -->
@@ -201,10 +208,31 @@
         <!-- ── SECCIÓN: INFORMACIÓN ───────────────────────── -->
         <section class="animar-aparecer animar-delay-3">
           <span class="etiqueta-seccion">INFORMACIÓN</span>
+<<<<<<< Updated upstream
           <div class="cfg-lista">
             <div class="cfg-item"><span>ℹ️</span><span class="cfg-item-label">Acerca de BovWeight CR</span><span class="cfg-flecha">›</span></div>
             <div class="cfg-item"><span>📋</span><span class="cfg-item-label">Términos y Condiciones</span><span class="cfg-flecha">›</span></div>
             <div class="cfg-item"><span>🔒</span><span class="cfg-item-label">Política de Privacidad</span><span class="cfg-flecha">›</span></div>
+=======
+          <div class="config-lista">
+            <div class="config-item" @click="irAAcercaDe">
+  <span>ℹ️</span>
+  <span>Acerca de BovWeight CR</span>
+  <span class="config-flecha">›</span>
+</div>
+
+<div class="config-item" @click="irATerminos">
+  <span>📋</span>
+  <span>Términos y Condiciones</span>
+  <span class="config-flecha">›</span>
+</div>
+
+<div class="config-item" @click="irAPoliticaPrivacidad">
+  <span>🔒</span>
+  <span>Política de Privacidad</span>
+  <span class="config-flecha">›</span>
+</div>
+>>>>>>> Stashed changes
           </div>
         </section>
 
@@ -218,7 +246,6 @@
         </button>
 
         <p class="cfg-version">BovWeight CR v1.0.0</p>
-        <p class="cfg-nota-local">El color del avatar se guarda solo en este dispositivo.</p>
         <div style="height:40px"></div>
       </div>
 
@@ -239,20 +266,20 @@ import {
   IonButtons, IonBackButton
 } from '@ionic/vue';
 import { useAlmacenAuth } from '@/stores/auth.js';
+import { useAlmacenFincas } from '@/stores/fincas.js';
+import { useAlmacenAnimales } from '@/stores/animales.js';
+import api from '@/services/api';
 
 const router        = useRouter();
 const almacenAuth   = useAlmacenAuth();
+const almacenFincas = useAlmacenFincas();
+const almacenAnimales = useAlmacenAnimales();
 const modoOscuro    = ref(document.documentElement.getAttribute('data-tema') === 'oscuro');
 
+// ── Estado Local para Estadísticas de Negocio ───────────
+const animalesActivosHato = ref(0);
+
 // ── Avatar ──────────────────────────────────────────────
-const coloresDisponibles = ['#414833', '#656D4A', '#8B8E83', '#C2A86E', '#6B7A3D', '#3B4F2B'];
-const colorAvatar = ref(localStorage.getItem('bw_avatar_color') || coloresDisponibles[0]);
-
-function elegirColor(color) {
-  colorAvatar.value = color;
-  localStorage.setItem('bw_avatar_color', color);
-}
-
 const iniciales = computed(() => {
   const nombre = almacenAuth.nombreCompleto || '';
   const partes  = nombre.trim().split(' ').filter(Boolean);
@@ -260,13 +287,14 @@ const iniciales = computed(() => {
   return nombre.charAt(0).toUpperCase() || 'U';
 });
 
-const fechaCreacion = computed(() => {
+const fechaCreacionShort = computed(() => {
   const raw = almacenAuth.usuario?.created_at;
-  if (!raw) return null;
+  if (!raw) return '';
   try {
-    return new Date(raw).toLocaleDateString('es-CR', { year: 'numeric', month: 'long' });
+    const date = new Date(raw);
+    return date.toLocaleDateString('es-CR', { month: 'short', year: 'numeric' });
   } catch {
-    return null;
+    return '';
   }
 });
 
@@ -296,8 +324,24 @@ function resetFormNombre() {
   erroresNombre.value = '';
 }
 
-onMounted(() => {
+onMounted(async () => {
   resetFormNombre();
+
+  // Cargar fincas
+  await almacenFincas.cargarFincas();
+  
+  // Calcular total de ganado activo sumando los animales de cada finca
+  let tempActivos = 0;
+  for (const finca of almacenFincas.lista) {
+    try {
+      const respuesta = await api.get(`/fincas/${finca.id}/animales`);
+      const animales = respuesta.data.datos || [];
+      tempActivos += animales.filter(a => a.estado === 'activo' || !a.estado).length;
+    } catch (err) {
+      console.error(`Error al calcular ganado activo de la finca ${finca.id} para el perfil:`, err);
+    }
+  }
+  animalesActivosHato.value = tempActivos;
 });
 
 function validarNombre() {
@@ -417,8 +461,25 @@ function alternarModoOscuro() {
 function irAFincas()   { router.push('/app/fincas'); }
 function irAReportes() { router.push('/app/reportes'); }
 
+<<<<<<< Updated upstream
 async function cerrarSesion() {
   await almacenAuth.cerrarSesion();
+=======
+function irAAcercaDe() {
+  router.push('/app/acerca-de');
+}
+
+function irATerminos() {
+  router.push('/app/terminos');
+}
+
+function irAPoliticaPrivacidad() {
+  router.push('/app/politica-privacidad');
+}
+
+function cerrarSesion() {
+  almacenAuth.cerrarSesion();
+>>>>>>> Stashed changes
   router.replace('/login');
 }
 
@@ -447,9 +508,9 @@ function mostrarToast(mensaje, tipo = 'exito') {
 /* ── Tarjeta de perfil ─────────────────────────────────── */
 .cfg-perfil {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 20px;
+  padding: 16px 20px;
   background: var(--superficie-tarjeta);
   border-radius: var(--borde-radio-xl);
   border: 1px solid var(--borde-color);
@@ -458,41 +519,20 @@ function mostrarToast(mensaje, tipo = 'exito') {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
   flex-shrink: 0;
 }
 .cfg-avatar {
-  width: 64px;
-  height: 64px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--fuente-display);
   font-weight: 800;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   color: #fff;
-  transition: background 0.25s;
-}
-/* Selector de colores del avatar */
-.cfg-colores {
-  display: flex;
-  gap: 6px;
-}
-.cfg-color-btn {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.15s, border-color 0.15s;
-}
-.cfg-color-btn:hover { transform: scale(1.2); }
-.cfg-color-btn--activo {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px var(--primario);
-  transform: scale(1.15);
+  background: var(--primario); /* Color institucional de BovWeight CR */
 }
 
 /* ── Info del perfil ───────────────────────────────────── */
@@ -520,9 +560,33 @@ function mostrarToast(mensaje, tipo = 'exito') {
   gap: 8px;
   flex-wrap: wrap;
 }
-.cfg-fecha {
-  font-size: 10px;
+
+/* ── Grilla de Estadísticas de Negocio ────────────────── */
+.cfg-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--borde-color);
+}
+.cfg-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.cfg-stat-val {
+  font-family: var(--fuente-display);
+  font-size: var(--tamano-base);
+  font-weight: 700;
+  color: var(--texto-primario);
+}
+.cfg-stat-lbl {
+  font-size: 9px;
   color: var(--texto-terciario);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
 }
 
 /* ── Lista de configuración ────────────────────────────── */
@@ -623,12 +687,6 @@ function mostrarToast(mensaje, tipo = 'exito') {
 .cfg-version {
   text-align: center;
   font-size: var(--tamano-xs);
-  color: var(--texto-terciario);
-  margin: 0;
-}
-.cfg-nota-local {
-  text-align: center;
-  font-size: 10px;
   color: var(--texto-terciario);
   margin: 0;
 }

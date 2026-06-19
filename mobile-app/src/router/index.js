@@ -140,6 +140,25 @@ const rutas = [
     component: () => import('@/views/FormularioVeterinarioView.vue'),
     beforeEnter: protegerRuta
   }
+  ,
+  {
+    path: '/app/acerca-de',
+    name: 'AcercaDe',
+    component: () => import('@/views/AcercaDeView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/terminos',
+    name: 'Terminos',
+    component: () => import('@/views/TerminosView.vue'),
+    beforeEnter: protegerRuta
+  },
+  {
+    path: '/app/politica-privacidad',
+    name: 'PoliticaPrivacidad',
+    component: () => import('@/views/PoliticaPrivacidadView.vue'),
+    beforeEnter: protegerRuta
+  }
 ];
 
 export const enrutador = createRouter({

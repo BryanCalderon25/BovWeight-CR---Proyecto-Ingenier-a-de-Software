@@ -100,6 +100,9 @@ function irAlLogin() {
   align-items: center;
   justify-content: center;
 }
+[data-tema="oscuro"] .acceso-invitado-content {
+  --background: radial-gradient(circle at top, #1E2218 0%, #121510 100%);
+}
 .caja-centrada {
   max-width: 400px;
   margin: 80px auto 0 auto;
@@ -135,6 +138,10 @@ function irAlLogin() {
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--borde-radio-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+[data-tema="oscuro"] .tarjeta-vidrio {
+  background: rgba(30, 34, 24, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 .loader-container {
   display: flex;
@@ -180,7 +187,7 @@ function irAlLogin() {
 .texto-cargando, .texto-exito, .texto-error {
   font-size: var(--tamano-md);
   font-weight: bold;
-  color: var(--texto-principal);
+  color: var(--texto-primario);
   margin: 0;
 }
 .texto-nombre {
